@@ -434,13 +434,152 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             return retVal;
         });
     });
+    args.app.get('/group/:groupid', function (req, res) {
+        userAuthenticated(req, function (authenticated) {
+            if (authenticated) {
+                getPadsOfGroup(req.params.groupid, '', function (pads) {
+                    getUser(req.session.userId, function (found, currUser) {
+                        getGroup(req.params.groupid, function (found, currGroup) {
+                            getUserGroup(req.params.groupid, req.session.userId, function (found, currUserGroup) {
+                                var render_args;
+                                if (!currUserGroup) {
+                                    render_args = {
+                                        errors: [],
+                                        msg: "This group does not exist! Perhaps someone has deleted the group."
+                                    };
+                                    res.send(eejs
+                                        .require("ep_maadix/templates/msgtemplate.ejs",
+                                            render_args));
+                                    return;
+                                }
+                                var isown = currUserGroup[0].Role == 1;
+                                if (currGroup && currUser && currUserGroup) {
+                                    render_args = {
+                                        errors: [],
+                                        id: currGroup[0].name,
+                                        groupid: currGroup[0].groupID,
+                                        username: req.session.username,
+                                        isowner: isown,
+                                        pads: pads
+                                    };
+                                    res.send(eejs.require("ep_maadix/templates/group.ejs", render_args));
+                                } else {
+                                    render_args = {
+                                        errors: [],
+                                        msg: "This group does not exist! Perhabs anyone has deleted the group."
+                                    };
+                                    res.send(eejs.require("ep_maadix/templates/msgtemplate.ejs",
+                                        render_args));
+                                }
+                            });
+                        });
+                    });
+
+                });
+            } else {
+                res.redirect("../../index.html");
+            }
+        });
+    });
+    args.app.post('/createGroup', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            userAuthenticated(req, function (authenticated) {
+                var data = {};
+                if (authenticated) {
+                    if (!fields.groupName) {
+                        sendError("Group Name not defined", res);
+                        return;
+                    }
+                    var existGroupSql = "SELECT * from Groups WHERE Groups.name = ?";
+                    getOneValueSql(existGroupSql, [fields.groupName], function (found) {
+                        if (found) {
+                            sendError('Group already exists', res);
+                            return;
+                        } else {
+                            var addGroupSql = "INSERT INTO Groups VALUES(null, ?)";
+                            var addGroupQuery = connection.query(addGroupSql, [fields.groupName]);
+                            addGroupQuery.on('error', mySqlErrorHandler);
+                            addGroupQuery.on('result', function (group) {
+                                data.groupid = group.insertId;
+                                connection.pause();
+                                var addUserGroupSql = "INSERT INTO UserGroup Values(?,?,1)";
+                                var addUserGroupQuery = connection2.query(addUserGroupSql, [req.session.userId, group.insertId]);
+                                addUserGroupQuery.on('error', mySqlErrorHandler);
+                                addUserGroupQuery.on('result', function () {
+                                    groupManager.createGroupIfNotExistsFor(group.insertId.toString(), function (err, val) {
+                                        if (err) {
+                                            log('error', 'failed to createGroupIfNotExistsFor');
+                                        }
+                                    });
+                                });
+                                addUserGroupQuery.on('end', function() {
+                                    connection.resume();
+                                })
+                            });
+                        }
+                        addGroupQuery.on('end', function () {
+                            data.success = true;
+                            data.error = null;
+                            res.send(data);
+                        });
+                    });
+                } else {
+                    res.send("You are not logged in!!");
+                }
+            });
+        });
+  });
+ args.app.post('/createPad', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            if (err) {
+                log('error', 'formidable parsing error in ' + req.path);
+                res.send(err);
+                return;
+            }
+            userAuthenticated(req, function (authenticated) {
+                if (authenticated) {
+                    if (!fields.groupId) {
+                        sendError('Group-Id not defined', res);
+                        return;
+                    } else if (!fields.padName) {
+                        sendError('Pad Name not defined', res);
+                        return;
+                    }
+                    var existPadInGroupSql = "SELECT * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName = ?";
+                    getOneValueSql(existPadInGroupSql, [fields.groupId, fields.padName], function (found) {
+                        if (found || (fields.padName.length == 0)) {
+                            sendError('Pad already Exists', res);
+                        } else {
+                            var addPadToGroupSql = "INSERT INTO GroupPads VALUES(?, ?)";
+                            var addPadToGroupQuery = connection.query(addPadToGroupSql, [fields.groupId, fields.padName]);
+                            addPadToGroupQuery.on('error', mySqlErrorHandler);
+                            addPadToGroupQuery.on('end', function () {
+                                addPadToEtherpad(fields.padName, fields.groupId, function () {
+                                    var data = {};
+                                    data.success = true;
+                                    data.error = null;
+                                    res.send(data);
+                                });
+                            });
+                        }
+                    });
+                } else {
+                    res.send("You are not logged in!!");
+                }
+            });
+        });
+});
     args.app.get('/dashboard', function (req, res) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
+		 var sql = "Select Groups.* from Groups inner join UserGroup on(UserGroup.groupID = Groups.groupID) where UserGroup.userID = ?";
+		 getAllSql(sql, [req.session.userId], function (groups) {
                  var render_args = {
                     username: req.session.username,
+		    groups: groups,
                 };
                  res.send(eejs.require("ep_maadix/templates/dashboard.ejs", render_args));
+	    });
             } else {
                 res.redirect("/login");
             }
@@ -481,6 +620,96 @@ function existValueInDatabase(sql, params, cb) {
         }
     });
 }
+
+function getOneValueSql(sql, params, cb) {
+    log('debug', 'getOneValueSql');
+    var qry = connection.query(sql, params, function (err, found) {
+        if (err) {
+            log('error', 'getOneValueSql error, sql: ' + sql);
+            cb(false);
+        } else if (!found || found.length == 0) {
+            cb(false, null);
+        } else {
+            cb(true, found);
+        }
+    });
+    qry.on('error', mySqlErrorHandler)
+}
+
+function getAllSql(sql, params, cb) {
+    log('debug', 'getAllSql');
+    var allInstances = [];
+    var queryInstances = connection.query(sql, params);
+    queryInstances.on('error', mySqlErrorHandler);
+    queryInstances.on('result', function (foundInstance) {
+        connection.pause();
+        allInstances.push(foundInstance);
+        connection.resume();
+    });
+    queryInstances.on('end', function () {
+        cb(allInstances);
+    });
+}
+
+function getPadsOfGroup(id, padname, cb) {
+    var allPads = [];
+    var allSql = "Select * from GroupPads where GroupPads.GroupID = ?";
+    var queryPads = connection.query(allSql, [id]);
+    queryPads.on('error', mySqlErrorHandler);
+    queryPads.on('result', function (foundPads) {
+        log('debug', 'getPadsOfGroup result');
+        connection.pause();
+        var pad = {};
+        pad.name = foundPads.PadName;
+        if (pad.name != "") {
+            getEtherpadGroupFromNormalGroup(id, function (group) {
+                log('debug', 'getEtherpadGroupFromNormalGroup cb');
+                padManager.getPad(group + "$" + pad.name, null, function (err, origPad) {
+                    if (err) log('error', err);
+                    pad.isProtected = origPad.isPasswordProtected();
+                    origPad.getLastEdit(function (err, lastEdit) {
+                        pad.lastedit = converterPad(lastEdit);
+                        allPads.push(pad);
+                        connection.resume();
+                    });
+                });
+            });
+        } else {
+            connection.resume();
+        }
+    });
+    queryPads.on('end', function () {
+        cb(allPads);
+    });
+}
+
+function getUser(userId, cb) {
+    log('debug', 'getUser');
+    var sql = "Select * from User where userID = ?";
+    getOneValueSql(sql, [userId], cb);
+}
+
+function getGroup(groupId, cb) {
+    log('debug', 'getGroup');
+    var sql = "Select * from Groups where groupID = ?";
+    getOneValueSql(sql, [groupId], cb);
+}
+
+function getUserGroup(groupId, userId, cb) {
+    log('debug', 'getUserGroup');
+    var sql = "Select * from UserGroup where groupID = ? and userID = ?";
+    getOneValueSql(sql, [groupId, userId], cb);
+}
+var converterPad = function (UNIX_timestamp) {
+    var a = new Date(UNIX_timestamp);
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var year = a.getFullYear();
+    var month = months[a.getMonth()];
+    var date = a.getDate();
+    var hour = (( a.getHours() < 10) ? "0" : "") + a.getHours();
+    var min = ((a.getMinutes() < 10) ? "0" : "") + a.getMinutes();
+    return date + '. ' + month + ' ' + year + ' ' + hour + ':' + min + ' Uhr';
+};
 
 exports.socketio = function (hook_name, args, cb) {
     var io = args.io.of("/pluginfw/admin/user_pad");

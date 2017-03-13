@@ -1,0 +1,85 @@
+html, body {
+padding: 0;
+margin: 0;
+height: 100%;
+min-height: 100%;
+font-family: 'Open Sans', sans-serif;
+color: #4f5f6f;
+overflow-x: hidden;
+}
+ body {font-size: 1rem;
+line-height: 1.5;
+background-color: #f0f3f6;
+}
+
+header {
+ background-color: #d7dde4;
+min-height:50px;
+display: flex;
+-webkit-box-align: center;
+-moz-box-align: center;
+align-items: center;
+-webkit-box-pack: justify;
+justify-content: space-between;
+padding: 3px 12px;
+}
+
+.header .header-block-buttons {
+text-align: center;
+margin-left: auto;
+margin-right: auto;
+white-space: nowrap;
+}
+.header .header-block-nav {
+margin-left: auto;
+white-space: nowrap;
+padding-right: 15px;
+}
+
+article {padding:2%;}
+a {text-decoration:none; color:#333;}
+a:hover {color:#2D4162;}
+a.header-btn {padding: 7px;}
+
+/**********************************************************************/
+
+/******************TABLES ************************************/
+
+/********************************************************************/
+
+table { 
+
+  width: 100%; 
+
+  border-collapse: collapse; 
+
+  margin : 15px 0;
+}
+
+/* Zebra striping */
+
+tr:nth-of-type(odd) { 
+
+  background: #d7dfe9; 
+
+}
+
+th { 
+
+  background: #2D4162; 
+
+  color: white; 
+
+  font-weight: bold; 
+
+}
+
+td, th { 
+
+  padding: 6px; 
+
+  border: 1px solid #ccc; 
+
+  text-align: left; 
+
+}

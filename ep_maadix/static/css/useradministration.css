@@ -157,3 +157,13 @@ table input[type=button] {
 #GroupBox {
   height: 400px;
 }
+input[type="button"]{ cursor: pointer;}
+span.count {color:#444; background-color:#FFF;}
+/**********HEADER************/
+#header {background-color: #d7dde4; height:70px;display: flex; align-items: center;}
+ul#maadix_menu {width:100%;}
+
+ul#maadix_menu li {display:inline-block; list-style:none;font-size:21px;padding: 8px;border: 1px solid #555;}
+ul#maadix_menu li a {padding:8px;}
+/***************************/
+
