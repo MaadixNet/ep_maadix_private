@@ -1280,10 +1280,10 @@ $(document).ready(function() {
 			data.location = url;
 			data.groupId = groupId;
 			data.padname = padname;
-//			console.log(data);
+			console.log(data);
 			post(data, url+'directToPad' ,function(data){
 				document.cookie = "sessionID="+ data.session +"; path=/";
-				window.location = window.location + "/pad.html/" + data.group + "$" + data.pad_name;
+				window.location = window.location + "/pad/" + data.group + "$" + data.pad_name;
 			});
 		});
 	});

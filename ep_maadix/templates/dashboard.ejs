@@ -10,6 +10,7 @@
                 <script type="text/javascript" src="static/js/html10n.js"></script>
                 <script type="text/javascript" src="static/js/l10n.js"></script>
                 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+
                 <script src="/static/plugins/ep_maadix/static/js/client/less.js" type="text/javascript"></script>
                 <script src="/static/plugins/ep_maadix/static/js/client/jquery.js" type="text/javascript"></script>
                 <script src="/static/plugins/ep_maadix/static/js/client/documentReadyRefresh.js" type="text/javascript"></script>
@@ -32,7 +33,7 @@
 
 	</header>	
                <article class="content items-list-page">
-                    <div class="title-search-block">
+                    <div id="wrapper" class="title-search-block">
                         <div class="title-block">
                             <div class="row">
                                 <div class="col-md-6">
@@ -49,34 +50,23 @@
 					<tr>
 						<th>Group</th>
 						<th>Role</th>
-						<th>Manage Users</th>
+						<th>Manage Users</th> 
+						<th>Manage Pads</th>
 						<th>Delete</th>
 					<tr>
 				</thead>
 				<% for(var i = 1; i <= groups.length; i++){%>
-					<%if (i%2 == 1) {%>
-						<tr class="odd visible" id="Gruppe<%= groups[i-1].groupID%>" data-role="<%= groups[i-1].Role%>">
-							<td class="first"><a href="group/<%= groups[i-1].groupID%>"><%= groups[i-1].name%></a></td>
-							<td class="role"><%if (groups[i-1].Role == 1) {%>Owner<%} else {%>User<%}%></td>
-							<td title="User Management"><img data-groupid="<%=groups[i-1].groupID%>" src="./static/plugins/ep_user_pad_frontend/static/images/users-gold-16.png" class="groupDetails"></img></td>
-							<%if (groups[i-1].Role == 1) {%>
-								<td title="Delete Group" class="last"><img data-groupid="<%=groups[i-1].groupID%>" data-name="<%=groups[i-1].name%>" src="./static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></img></td>
-							<%} else {%>
-								<td class="last"></td>
-							<%}%>
-						</tr>
-					<%} else {%>
 						<tr class="visible" id="Gruppe<%= groups[i-1].groupID%>" data-role="<%= groups[i-1].Role%>">
 							<td class="first"><a href="group/<%= groups[i-1].groupID%>"><%= groups[i-1].name%></a></td>
 							<td class="role"><%if (groups[i-1].Role == 1) {%>Owner<%} else {%>User<%}%> </td>
-							<td title="User Management"><img data-groupid="<%=groups[i-1].groupID%>" src="./static/plugins/ep_user_pad_frontend/static/images/users-gold-16.png" class="groupDetails"></img></td>
+							<td class="first"><a href="groupusers/<%= groups[i-1].groupID%>">View/Add Users</a></td>
+							<td class="first"><a href="group/<%= groups[i-1].groupID%>">View/Add Pads</a></td>
 							<%if (groups[i-1].Role == 1) {%>
-								<td title="Delete Group" class="last"><img data-groupid="<%=groups[i-1].groupID%>" data-name="<%=groups[i-1].name%>" src="./static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></img></td>
+								<td title="Delete Group" class="last"><img data-groupid="<%=groups[i-1].groupID%>" data-name="<%=groups[i-1].name%>" src="./static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></img>X</td>
 							<%} else {%>
-								<td class="last"></td>
+								<td class="last">Only owner can delete a group</td>
 							<%}%>
 						</tr>
-					<%}%>
 				<% } %>
 				</table>
 
@@ -96,7 +86,83 @@
 		</div>
 	<div style="clear: both"></div>
 	</article>
-
+<script>
+    		$(document).ready(function(){
+				$('#logout').click(function(e){
+    				e.preventDefault();
+    			    
+    				var data = {};
+    				var loc = document.location, port = loc.port == "" ? (loc.protocol == "https:" ? 443
+    						: 80)
+    						: loc.port, url = loc.protocol + "//"
+    						+ loc.hostname + ":" + port + "/";
+    				
+    				data.location = url;
+    				$.ajax({
+    					type: 'POST',
+    					data: JSON.stringify(data),
+    					contentType: 'application/json',
+    					url: url + 'logout',	
+    					success: function(data) {
+    						window.location = "../index.html";	
+    					},
+    					error: function (xhr, ajaxOptions, thrownError) {
+    						console.log(thrownError);
+    					}
+    				});
+				});
+				
+	   			$(".delete").click(function(){
+	   				console.log('dfkld');
+    				$("#wrapper").append('<div id="overlay"></div>');
+    				$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"><span'+
+    						' class="close"><img src="./static/plugins/ep_user_pad_frontend/static/images/close-cyan-12.png"></span></div><div id="lightBoxMain"><div class='+
+    						'"headline"><img src="./static/plugins/ep_user_pad_frontend/sta'+
+    						'tic/images/close-red-32.png" class="headlineImage" alt="Delete'+
+    						'"></img><h1 lang="en" class="red">Delete "'+$(this).data('name') +'"'+
+    						'</h1></div><div class="content"><button id= "deleteGroup" data-name="'+ $(this).data('name')+'" data-groupid="'+$(this).data('groupid')+'" lang="en" class="margi'+
+    						'nRight">Delete</button><button id="cancelDelete" lang="en">Cancel</button></div>'+
+    						'</div></div>');
+    				$("#lightBox").css("margin-top",-$("#lightBox").height()/2);
+    			
+    				$(".close").click(function(){
+    					$("#overlay").remove();
+    					$("#lightBox").remove();
+    				});
+    		   		$("#cancelDelete").click(function(){
+    		   			console.log("clicked");
+    		   			$("#overlay").remove();
+    		   			$("#lightBox").remove();
+    		   		});
+    		   		
+    		   	 	$("#deleteGroup").click(function(){
+		 		  	    var data = {};
+		 		  	    getBaseURL(1,function(baseurl){
+	    		  			var loc = document.location;
+	    		  			url = baseurl;
+		 		  			data.groupId = $("#deleteGroup").data('groupid');
+		 		  			data.groupName = $("#deleteGroup").data('name');
+		 		  			$.ajax({
+		 		  				type: 'POST',
+		 		  				data: JSON.stringify(data),
+		 		  				contentType: 'application/json',
+		 		  				url: url + 'deleteGroup',	
+		 		  				success: function(data) {
+		 		  						if(data.success){
+		 		  							window.location.href = loc;	
+		 		  						}else{
+		 		  							console.log(data.error);
+		 		  						}	
+		 		  				},
+		 		  				error: function (xhr, ajaxOptions, thrownError) {
+		 		  					console.log(thrownError);
+		 		  				}
+		 		  			});
+	 		  	    	});
+ 		  	    	});
+    			}); 
+    		});
+    	</script>
 	</body>	
 </html>
 

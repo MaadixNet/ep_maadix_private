@@ -16,7 +16,7 @@
 		<script src="/static/plugins/ep_maadix/static/js/client/documentReadyRefresh.js" type="text/javascript"></script>
 		<script src="/static/plugins/ep_maadix/static/js/client/retina.js" type="text/javascript"></script>
 		<script src="/static/plugins/ep_maadix/static/js/client/etherpad.js" type="text/javascript"></script>
-		<script src="/static/plugins/ep_maadix/static/js/client/slimtable.js" type="text/javascript"></script>		
+		
 		<link href="/static/plugins/ep_maadix/static/css/custom.css" rel="stylesheet"> 
 	</head>
 	<body>
@@ -35,55 +35,52 @@
                     <div id="wrapper" class="title-search-block">
                         <div class="title-block">
                             <div class="row">
-				<h2 class="title" lang="en">Group: <%=id%> </h2>
-				<hr class="blue">
                                 <div class="col-md-6">
+				    <h2 class="title" lang="en">Group: <%=id%> </h2>			
                                     <h3 class="subtitle" lang="en"> Pad List</h3>
 				</div>
 				<div class="col-md-6">
-					<form class="search"><input type="text" data-groupid="<%=groupid%>" id="search" placeholder="Search"></input></form>
+					<form style="margin-bottom:5px"><input type="text" data-groupid="<%=groupid%>" id="search" placeholder="Search"></input></form>
 				</div>
-			    </div><!--row-->	
-			    <div class="clear"></div>
-			    <hr>	
-			    <div class="inputBlock">
-				<h4 lang="en">Add a Private Pad to this Group</h4>
-				<form id="createPrivatePadForm">
-					<input  type="text" placeholder="Pad-Name" id="createGroupPad" autocomplete="off">
-					<button data-groupid="<%= groupid %>" type="submit" lang="en" id="createPrivateGroupPad">Create</button>
-				</form>
-			    </div><!--input block-->
-
-			</div><!--title-block-->
-			<%if (pads.length > 0) {%> 
-				<table id="padstable">
+			    </div>	
+			</div>
+			<%if (users.length > 0) {%> 
+				<table class="card items">
 				<thead>
 					<tr>
-						<th>Pad Title</th>
-						<th>Last edit</th>
+						<th>User name</th>
+						<th>UserID</th>
 						<th>Delete</th>
 					<tr>
 				</thead>
-				<tbody>
-				<% for(var i = 1; i <= pads.length; i++){%>
+				<% for(var i = 1; i <= users.length; i++){%>
 					<tr>
-						<td class="first"><a class="padClick" data-groupid="<%=groupid%>" data-name="<%=pads[i-1].name%>"><%= pads[i-1].name%></a></td>
-						<td class="editDate" sort-data="<%=pads[i-1].timestampedit%>" data-timestampedit="<%=pads[i-1].timestampedit%>"><%=pads[i-1].lastedit%></td>
-						<td title="Delete Pad" class="last">
+						<td class="first"><a class="padClick" data-groupid="<%=groupid%>" data-name="<%=users[i-1].name%>"><%= users[i-1].name%></a></td>
+						<td class="editDate"><%=users[i-1].userID%></td>
+						<td title="Delete User" class="last">
 						<% if (isowner) {%>
-							<img data-padname="<%=pads[i-1].name%>" data-groupid = "<%= groupid %>" src="./../static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></td>
+							<img data-username="<%=users[i-1].name%>" data-groupid = "<%= groupid %>" src="./../static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></td>
 						<%} else {%>
 						Only available for goup owner
 						<% } %>
 					</tr>
 				<% } %>
-				</tbody>
 				</table>
 
+			</div>
+			<div class="navigationInfo"><span id="previousPage"><<</span> <span id="currentPage"></span> to <span id="currentPageCount"></span> of <span id="pageCount"></span> Pads <span id="nextPage">>></span></div>
 			<%} else {%>
 				<h4 class="red" lang="en">There are no pads in this group.</h4>	
 			<%}%>	
-	</div><!--wrapper-->
+		</div>
+	</div>
+		<div class="inputBlock">
+			<h4 lang="en">Add a Private Pad to this Group</h4>
+			<form id="createPrivatePadForm">
+				<input  type="text" placeholder="Pad-Name" id="createGroupPad" autocomplete="off">
+				<button data-groupid="<%= groupid %>" type="submit" lang="en" id="createPrivateGroupPad">Create</button>
+			</form>
+		</div>
 	<div style="clear: both"></div>
 	</article>
 	 <script>
@@ -104,27 +101,7 @@
        			console.log("<<<<<<<<<");
        			cb(url);
        		};
-		$("#padstable").slimtable({
-			tableData: null,
-			dataUrl: null,
-			keepAttrs: ["data-timestampedit","data-groupid","data-name","data-padname"],
-
-			itemsPerPage: 10,
-			ipp_list: [5,10,20],
-
-			colSettings: [1],
-			sortList: [1],
-
-			text1: "items/page",
-			text2: "Loading...",
-
-			sortStartCB: null,
-			sortEndCB: null
-		});
-
     		$(document).ready(function(){  			
-
-
     			$(".delete").click(function(){
     				$("#wrapper").append('<div id="overlay"></div>');
     				$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"'+

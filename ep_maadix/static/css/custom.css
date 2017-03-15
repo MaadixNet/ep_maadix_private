@@ -41,6 +41,16 @@ a {text-decoration:none; color:#333;}
 a:hover {color:#2D4162;}
 a.header-btn {padding: 7px;}
 
+.clear {clear:both;}
+/********************COLS************/
+
+.col-md-6 {width:50%;float:left; min-width:320px;}
+.col-md-6 form.search {margin: 18.7167px; float:right;}
+
+a.padClick {cursor:pointer;}
+hr {color:#ddd;}
+hr.ble{color:#2D4162;}
+
 /**********************************************************************/
 
 /******************TABLES ************************************/
@@ -83,3 +93,147 @@ td, th {
   text-align: left; 
 
 }
+
+/***********************************************************/
+/*		Lightbox				  */
+/**********************************************************/
+
+#overlay {
+  position: fixed; 
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  background-color:#000;
+  -ms-filter: "Alpha(Opacity=50)"; /* IE 8 */
+  filter:alpha(opacity=50); /* IE5-7 */
+  -moz-opacity: 0.50; /* Mozilla */
+  opacity: 0.50;
+}
+
+#lightBox {
+  position:fixed;
+  top:50%;
+  left:50%;
+  margin-left:-275px;
+  //margin-top:-100px;
+  z-index:1000;
+  width:550px;
+  background-color:#fff;
+ // text-align:center;
+  .roundedBorder;
+  border: 9px solid @main-orange;
+}
+
+#lightBox .overlayLoginArea {
+  float: left;
+  width: 50%; 
+}
+
+#lightBox #lightBoxHeader {
+  padding: 7px 7px;
+  height: 16px;
+  text-align: right;
+}
+
+#lightBox .close {
+  .at2x('images/close-cyan-12.png');
+  display: inline-block;
+  height: 12px;
+  width: 12px;
+  cursor: pointer;
+}
+
+#lightBox .content {
+  margin: 20px 30px 25px 30px;
+}
+
+#lightBox .headline {
+  margin-left: 30px;
+}
+
+
+#lightBox label {
+  display: block;
+  font-size: 11pt;
+  margin-bottom: 3px;
+}
+
+#lightBox #formEtherpadLogin input[type=text], #lightBox #formEtherpadLogin input[type=password], #lightBox #formEtherpadRegister input[type=text], #lightBox #formEtherpadRegister input[type=password]{
+  display: block;
+  width: 250px;
+}
+/********************COLS************/
+
+.col-md-6 {width:50%;float:left;}
+/*****sortable table styles********/
+
+/* Paging */
+.slimtable-paging-div {
+	margin-top: 5px;
+	display: inline-block;
+	width: 100%;
+}
+
+.slimtable-paging-seldiv {
+	display: inline;
+	float: right;
+}
+
+.slimtable-paging-select {
+	margin-right: 10px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
+	padding: 3px;
+}
+
+.slimtable-paging-btnsdiv {
+	display: inline-block;
+}
+
+.slimtable-page-btn {
+	display: inline-block;
+	width: 25px;
+	height: 25px;
+	line-height: 25px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
+	text-align: center;
+	font-weight: bold;
+	margin-right: 5px;
+	cursor: pointer;
+}
+
+.slimtable-page-btn.active {
+	background-color: #ccc;
+}
+
+/* Sprites */
+
+.slimtable-sprites {
+	margin-left: 2px;
+	margin-right: 5px;
+	vertical-align: middle;
+
+	display: inline-block;
+	background-image: url("../html/arrows.png");
+	width: 17px;
+	height: 17px;
+}
+
+.slimtable-sortboth {
+	background-position: -1px -1px;
+}
+
+.slimtable-sortnone {
+	background-position: -19px -19px;
+}
+
+.slimtable-sortasc {
+	background-position: -1px -19px;
+}
+
+.slimtable-sortdesc {
+	background-position: -19px -1px;
+}
+
