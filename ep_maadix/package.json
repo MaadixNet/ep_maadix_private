@@ -41,7 +41,7 @@
     "url": "https://pablog.me"
   },
   "bugs": {
-    "url": "https://github.com/PabloCastellano/ep_maadix/issues"
+    "url": "https://github.com/MaadixNet/ep_maadix/issues"
   },
   "dependencies": {
     "crypto": "0.0.3",
@@ -55,7 +55,7 @@
   "dist": {
     "shasum": "5cf2fc60499441c300317b56e1edf24596fe1d4f"
   },
-  "homepage": "https://github.com/PabloCastellano/ep_maadix#readme",
+  "homepage": "https://github.com/MaadixNet/ep_maadix#readme",
   "keywords": [
     "etherpad-lite",
     "maadix",
@@ -72,7 +72,7 @@
   "readmeFilename": "README.txt",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PabloCastellano/ep_maadix.git"
+    "url": "git+https://github.com/MaadixNet/ep_maadix.git"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
