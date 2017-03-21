@@ -40,7 +40,9 @@ function group(hooks,context,cb){
 			+ '/', resource = baseURL.substring(1)
 			+ "socket.io";
 			
-	socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+//	socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+        var room = url + "pluginfw/admin/user_pad";
+        socket = io.connect(room, {path: baseURL + "socket.io", resource : resource});
 	
 	var currentPads = [];
 	var currentUser = [];
@@ -284,7 +286,10 @@ function groups(hooks, context,cb){
 //	console.log("res:");
 //	console.log(resource);
 			
-	socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+	//socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+        var room = url + "pluginfw/admin/user_pad";
+        socket = io.connect(room, {path: baseURL + "socket.io", resource : resource});
+
 //	console.log('groups called');
 	var currentGroups = [];
 	
@@ -421,7 +426,9 @@ function users(hooks, context,cb){
 			+ '/', resource = baseURL.substring(1)
 			+ "socket.io";
 			
-	socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+	//socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+        var room = url + "pluginfw/admin/user_pad";
+        socket = io.connect(room, {path: baseURL + "socket.io", resource : resource});
 	
 	var currentUsers = [];
 	
@@ -605,8 +612,11 @@ function user(hooks,context,cb){
 			+ "socket.io";
 //	console.log(resource);
 			
-	socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
-	
+	//socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+        var room = url + "pluginfw/admin/user_pad";
+        socket = io.connect(room, {path: baseURL + "socket.io", resource : resource});
+
+
 	var currentGroups = [];
 
 	var list = new Werteliste(document.location.search);
@@ -770,7 +780,9 @@ function main(hooks,context,cb){
 			+ "socket.io";
 //	console.log(resource);
 
-	socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+	//socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
+        var room = url + "pluginfw/admin/user_pad";
+        socket = io.connect(room, {path: baseURL + "socket.io", resource : resource});
 
 	var getSettings = function(){
 		socket.emit("get-settings", function(settings){
