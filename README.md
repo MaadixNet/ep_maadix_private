@@ -16,14 +16,14 @@ In order to use this plugin you have to [configure Etherpad Lite to use MySQL as
 
 At the moment you still cannot install the plugin from the administrator interface so you have to clone it:
 
-    git clone https://github.com/PabloCastellano/ep_maadix
+    git clone https://github.com/MaadixNet/ep_maadix
     cp ep_maadix/ep_maadix/email.json.template ep_maadix/ep_maadix/email.json
     cd etherpad-lite
     npm install ../ep_maadix/ep_maadix
 
 In the near future this command should replace the previous ones:
 
-    npm install git+https://github.com/PabloCastellano/ep_maadix.git
+    npm install git+https://github.com/MaadixNet/ep_maadix.git
 
 Then use the provided [SQL script](/sql_listing.sql) to create the schema:
 
