@@ -40,7 +40,7 @@ var dbAuthParams = {
     stringifyObjects: true
 };
 
-var DEBUG_ENABLED = false;
+var DEBUG_ENABLED = true;
 
 encryptPassword = function (password, salt, cb) {
     var encrypted = crypto.createHmac('sha256', salt).update(password).digest('hex');
@@ -383,12 +383,13 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     args.app.get('/logout', function (req, res) {
         req.session.userId = null;
         req.session.username = null;
-        res.redirect("/");
+        res.redirect(req.session.baseurl + "/");
+        req.session.baseurl = null;
     });
     args.app.get('/login', function (req, res) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
-                 res.redirect("/dashboard");
+                 res.redirect(req.session.baseurl + "/dashboard");
             } else {
                 var render_args = {
                     errors: []
@@ -408,12 +409,13 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 res.send(eejs.require("ep_maadix/templates/login.ejs", render_args));
                 return false;
             }
-
+            var url = fields.baseurl;
             var retVal = userAuthentication(fields.email, fields.password, function (success, user, userFound, confirmed, active) {
                 if (success) {
                     req.session.userId = user.userID;
                     req.session.username = user.name;
-                    res.redirect('/dashboard');
+                    req.session.baseurl = url;
+                    res.redirect(req.session.baseurl + '/dashboard');
                     return true;
                 } else {
                     if (!active) {
@@ -620,7 +622,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             });
         });
 });
-    args.app.post('/userSearchTerm', function (req, res) {
+/*    args.app.post('/userSearchTerm', function (req, res) {
         new formidable.IncomingForm().parse(req, function (err, fields) {
             userAuthenticated(req, function (authenticated) {
                 if (authenticated) {
@@ -653,7 +655,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             });
         });
 });
-
+*/
     args.app.post('/deleteGroup', function (req, res) {
         new formidable.IncomingForm().parse(req, function (err, fields) {
             userAuthenticated(req, function (authenticated) {
@@ -817,7 +819,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                             username: req.session.username,
                                             groupID: req.params.groupID,
                                             groupName: currGroup[0].name,
-                                            padurl: "/p/" + req.params.padID
+                                            padurl: req.session.baseurl + "/p/" + req.params.padID
                                         };
                                         res.send(eejs
                                             .require("ep_maadix/templates/pad.ejs",
@@ -832,7 +834,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         username: req.session.username,
                                         groupID: req.params.groupID,
                                         groupName: currGroup[0].name,
-                                        padurl: "/p/" + req.params.padID
+                                        padurl: req.session.baseurl + "/p/" + req.params.padID
                                     };
                                     res.send(eejs
                                         .require("ep_maadix/templates/pad_with_login.ejs",
