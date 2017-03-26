@@ -30,9 +30,10 @@ var getBaseURL = function(slice,cb){
 			+ '/';
 	
 	url = url + baseURL;
-//	console.log(">>>>>");
-//	console.log(url);
-//	console.log("<<<<<<<<<");
+	console.log(">>>>>");
+	//console.log(url);
+        console.log(baseURL);
+	console.log("<<<<<<<<<");
 	cb(url);
 };
 
@@ -1167,69 +1168,19 @@ $(document).ready(function() {
 							$("#createPrivateGroupForm .errorUp").delay(2000).fadeOut(1000);
 					});
 				}else{
-					console.log(data);
-					$("#groupName").val('');
-					$("#wrapper").append('<div id="overlay"></div>');
-			    	$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"><span class="close"><img src="./../static/plugins/ep_user_pad_frontend/static/images/close-cyan-12.png"'+
-					'></span></div><div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"><img src="./../static/plugins/ep_user_pad_frontend/static/images/user-32.png" class="'+
-					'headlineImage" alt="Login"><h1 lang="en">User Management</h1></div><div class="content"><h3 lang="en">Add User</h3><div id= "wait"><form id = "selUsersForm"><input type="text"'+
-					'lang="en" placeholder="E-Mailaddress(es)" id="selectedUsers" class="marginRight" longInput><button id="invitebtn" type="submit">Add User</button><span lang="en" class="inviteInfo"'+
-					'>If there are more than one, separate with ;</span></form></div>');
-					
-			    	$("#lightBox").css("margin-top",-$("#lightBox").height()/2);
+                                    //console.log(data);
+                                    $("#groupName").val('');
+                                    $("#wrapper").append('<div id="overlay"></div>');
+                                    $("#wrapper").append('<div id="lightBox">'+
+                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en">Creando Grupo</h3></div></div></div>');
+                                        
+                                    $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
 
-			   	   	// click-event for the closing of the lightBox
-			   		$(".close").click(function(){
-			   			$("#overlay").remove();
-			   			$("#lightBox").remove();
-			   			window.location.reload();
-			   		});
-			    	
-			    	$("#selUsersForm").submit(function(e){
-			   			e.preventDefault();
-			   			var data = {};
-						getBaseURL(1,function(baseurl){
-				   			var users = $("#selectedUsers").val();
-				   			users = users.split(';');
-							url = baseurl;
-							data.users = users;
-							data.location = url;
-							var groupID = $("#lightBoxMain").data('groupid');
-							data.groupID = groupID;
-							console.log(data);
-							post(data, url+'inviteUsers' ,function(data){
-								if(data.success){
-									$("#overlay").remove();
-						   			$("#lightBox").remove();
-						   	   		$("#wrapper").append('<div id="overlay"></div>');
-						   	   		if(!data.success){
-						   	   			$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"><span class="close"><img src="./../../static/plugins/ep_user_pad_frontend/static/images/close-cyan-12.png"></span></div><div id="lightBoxMain"><div class="headline"><img src="./../../static/plugins/ep_user_pad_frontend/static/images/user-32.png" class="headlineImage" alt="Register"><h1>Failure</h1></div><div class="content">\
-						   	    						<label>'+ data.error +'</label></div></div></div>');
-						   	   		}else{
-						   	   			$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"><span class="close"><img src="./../../static/plugins/ep_user_pad_frontend/static/images/close-cyan-12.png"></span></div><div id="lightBoxMain"><div class="headline"><img src="./../../static/plugins/ep_user_pad_frontend/static/images/user-32.png" class="headlineImage" alt="Register"><h1>User Successfully Added</h1></div><div class="content">\
-				   	    						<label>The given Users are now added to the group.</label></div></div></div>');
-						   	   		}
-									$("#lightBox").css("margin-top",-$("#lightBox").height()/2);
-							   		$(".close").click(function(){
-							   			window.location.reload();
-							   		});
-								}else{
-									$("#waitImg").remove();
-									$("#err").remove();
-									$("#invitebtn").after('<div id="err" class="errorUp"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
-									$(".errorUp").delay(2000).fadeOut(1000);
-									console.log(data.error);
-								}
-							});
-						});
-			    	});
-					
-					
+                                    window.location.reload();
 				};
 			});
 		});
 	});
-	
 	$('#createPrivateGroupPad').click(function(e){
 		e.preventDefault();
 //		console.log('test');
@@ -1255,6 +1206,13 @@ $(document).ready(function() {
 							$("#createPrivatePadForm .errorUp").delay(2000).fadeOut(1000);
 					});
 				}else{
+                                    $("#groupName").val('');
+                                    $("#wrapper").append('<div id="overlay"></div>');
+                                    $("#wrapper").append('<div id="lightBox">'+
+                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en">Creando Pad</h3></div></div></div>');
+
+                                    $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
+
 					window.location = loc;
 				}						
 			});
@@ -1287,6 +1245,109 @@ $(document).ready(function() {
 			});
 		});
 	});
+
+
+
+/*************************USERS FUNCTIONS***********************/
+
+
+
+        $('#InviteUserForm').submit(function(e){
+                e.preventDefault();
+//              console.log('test');
+                var data = {};
+                var url;
+                var loc;
+                getBaseURL(2,function(baseurl){
+                        loc = document.location;
+                        url = baseurl;
+                      console.log(url);
+                        data.location = url;
+                        data.userEmail = $("#email").val();
+                        data.groupId = $("#InviteUserToGroupForm").data('groupid');
+                        data.UserRole = $("#userRole").val();
+//                      console.log(data);
+                        post(data, url+'inviteUsers' ,function(data){
+                                if(!data.success){
+                                        console.log(data.error);
+                                        $("#InviteUserForm input").each(function(){
+                                                if($(this).next().hasClass("errorUp"))
+                                                        $(this).next().remove();
+                                                        $(this).parent().append('<div class="errorUp"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
+                                                        $("#InviteUserForm .errorUp").delay(2000).fadeOut(1000);
+                                        });
+                                }else{
+//                                    $("#groupName").val('');
+                                    $("#wrapper").append('<div id="overlay"></div>');
+                                    $("#wrapper").append('<div id="lightBox">'+
+                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupId+'" ><div class="headline"></div><div class="content"><h3 lang="en">Sending invitation</h3></div></div></div>');
+
+                                    $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
+
+                                        window.location = loc;
+                                }
+                        });
+                });
+        });
+
+
+        $("#formEtherpadConfirm").submit(function(e) {
+                e.preventDefault();
+                var url;
+                getBaseURL(2,function(baseurl){
+                        var data = {};
+                        url = baseurl;
+                        data.email = $("#email").val();
+                        data.username =$("#username").val();
+                        data.password = $("#password").val();
+                        data.fullname = $("#fullname").val();
+                        data.passwordrepeat = $("#passwordrepeat").val();
+                        data.tok = $("#tok").val();
+                        data.location = url;
+                        console.log(data.location); 
+                        console.log(document.location);
+                        post(data, url+'confirminvitation' ,function(data){
+                                        if(data.success){
+                                                window.location = url + "login?act=ok";
+                                        } else{
+                                                console.log(data.error);
+                                                $("#wrapper").find(".errorRight").remove();
+                                                $("#formEtherpadConfirm input").each(function(){
+                                                        if($(this).is('#email') && (data.error == 'No valid E-Mail' || data.error == 'You need a valid invitation' )) {
+                                                                $(this).after('<div class="errorRight"><span class="arrowRight"></span>><span lang="en">' + data.error +'</span></div>');
+                                                        }
+                                                        if($(this).is('#username') && (data.error == 'Username not available' )) {
+                                                                $(this).after('<div class="errorRight"><span class="arrowRight"></span>><span lang="en">' + data.error +'</span></div>');
+                                                        }
+
+                                                        if($(this).is('#password') && ( data.error == 'Passwords do not match' || data.error == 'Password is empty' ) ) {
+                                                                $(this).after('<div class="errorRight"><span class="arrowRight"></span><span lang="en">' + data.error +'</span></div>');
+                                                        }
+
+                                                });
+                                                if(data.error == 'Unable to activate user'){
+                                                     $("#inner").before('<div class="errorRight"><span class="arrowRight"></span><span lang="en">' + data.error +'</span></div>');
+
+                                                }
+
+
+//                                              console.log(data);
+                                        }
+                        });
+        });
+        });
+
+
+
+
+
+
+
+
+
+/***************************END USER FUNCTIONS****************************/
+
+
 	
    	$("#register").click(function(){
    		$("#wrapper").append('<div id="overlay"></div>');

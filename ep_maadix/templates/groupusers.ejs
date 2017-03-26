@@ -7,7 +7,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 		<link rel="shortcut icon" href="favicon.ico">
 
-		<link rel="localizations" type="application/l10n+json" href="locales.json">
+		<link rel="localizations" type="application/l10n+json" href="../locales.json">
 		<script type="text/javascript" src="../static/js/html10n.js"></script>
 		<script type="text/javascript" src="../static/js/l10n.js"></script>
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
@@ -44,6 +44,18 @@
 				</div>
 			    </div>	
 			</div>
+                        <div class="inputBlock">
+                          <h4 lang="en">Invite user to this group</h4>
+                          <form id="InviteUserForm">
+                            <input  type="mail"  placeholder="User email" id="email" autocomplete="off">
+                              <input type="radio" name="userRole" id="userRole" value="3"> User - Can create and edit Pads<br>
+                              <input type="radio" name="userRole" id="userRole" value="2"> Editor Can create, edit, delete Pads and invite Users to this group<br>
+                              <input type="radio" name="userRole" id="userRole" value="1"> Admin - As Editor + can delete this Group<br>
+                            <button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Create</button>
+                          </form>
+
+                </div>
+
 			<%if (users.length > 0) {%> 
 				<table class="card items">
 				<thead>
@@ -75,10 +87,11 @@
 		</div>
 	</div>
 		<div class="inputBlock">
-			<h4 lang="en">Add a Private Pad to this Group</h4>
-			<form id="createPrivatePadForm">
-				<input  type="text" placeholder="Pad-Name" id="createGroupPad" autocomplete="off">
-				<button data-groupid="<%= groupid %>" type="submit" lang="en" id="createPrivateGroupPad">Create</button>
+			<h4 lang="en">Invite user to this group</h4>
+                        <p>If there are more than one, separate with ;</p>
+			<form id="InviteUserForm">
+				<input  type="mail"  placeholder="User email" id="email" autocomplete="off">
+				<button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Create</button>
 			</form>
 		</div>
 	<div style="clear: both"></div>
@@ -102,6 +115,7 @@
        			cb(url);
        		};
     		$(document).ready(function(){  			
+                  
     			$(".delete").click(function(){
     				$("#wrapper").append('<div id="overlay"></div>');
     				$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"'+

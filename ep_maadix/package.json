@@ -1,28 +1,61 @@
 {
-  "name": "ep_maadix",
-  "description": "With the maadix plugin it's possible to create password saved pads in groups. It's a User-Management System. It allows User to register, authenticate, to create groups and to create pads in groups.",
-  "version": "0.1.3",
+  "_args": [
+    [
+      {
+        "raw": "../ep_maadix/ep_maadix/",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "../ep_maadix/ep_maadix/",
+        "spec": "/var/www/etherpad/ep_maadix/ep_maadix",
+        "type": "directory"
+      },
+      "/var/www/etherpad/etherpad-lite"
+    ]
+  ],
+  "_from": "../ep_maadix/ep_maadix",
+  "_id": "ep_maadix@0.1.3",
+  "_inCache": true,
+  "_location": "/ep_maadix",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "../ep_maadix/ep_maadix/",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "../ep_maadix/ep_maadix/",
+    "spec": "/var/www/etherpad/ep_maadix/ep_maadix",
+    "type": "directory"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:../ep_maadix/ep_maadix",
+  "_shasum": "5194bbb7926e093bdbd6e19ac9be8a9dec55d3d7",
+  "_shrinkwrap": null,
+  "_spec": "../ep_maadix/ep_maadix/",
+  "_where": "/var/www/etherpad/etherpad-lite",
   "author": {
     "name": "MaadiX",
     "email": "contact@maadix.net",
     "url": "https://maadix.net"
-  },  
+  },
+  "bugs": {
+    "url": "https://github.com/MaadixNet/ep_maadix/issues"
+  },
   "dependencies": {
-    "formidable": "1.1.1",
-    "emailjs": "0.3.4",
     "crypto": "0.0.3",
-    "nodemailer": "0.5.2",
-    "mysql": "2.12.0"
-  },  
-  "readmeFilename": "README.txt",
-  "main": "hooks.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },  
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MaadixNet/ep_maadix.git"
-  },  
+    "emailjs": "0.3.4",
+    "formidable": "1.1.1",
+    "mysql": "2.12.0",
+    "nodemailer": "0.5.2"
+  },
+  "description": "With the maadix plugin it's possible to create password saved pads in groups. It's a User-Management System. It allows User to register, authenticate, to create groups and to create pads in groups.",
+  "devDependencies": {},
+  "dist": {
+    "shasum": "5cf2fc60499441c300317b56e1edf24596fe1d4f"
+  },
+  "homepage": "https://github.com/MaadixNet/ep_maadix#readme",
   "keywords": [
     "etherpad-lite",
     "maadix",
@@ -31,15 +64,19 @@
     "group pads",
     "private pads",
     "group"
-  ],  
+  ],
   "license": "Apache-2.0",
-  "_id": "ep_maadix@0.1.3",
-  "_from": "ep_maadix",
-  "dist": {
-    "shasum": "5cf2fc60499441c300317b56e1edf24596fe1d4f"
-  },  
-  "bugs": {
-    "url": "https://github.com/MaadixNet/ep_maadix/issues"
-  }
+  "main": "hooks.js",
+  "name": "ep_maadix",
+  "optionalDependencies": {},
+  "readme": "This is a user-management system for etherpad-lite\n\nINSTALL\n=======\n\n1) npm install ep_maadix\n2) You can visit http://youretherpad/admin/plugins. Search for maadix - click on install and the plugin works.\n(see also https://github.com/Pita/etherpad-lite/wiki/Creating-a-plugin   [Step 5 Install plugin])\n\n\n",
+  "readmeFilename": "README.txt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MaadixNet/ep_maadix.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "0.1.3"
 }
-

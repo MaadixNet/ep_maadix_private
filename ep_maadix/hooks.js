@@ -42,6 +42,8 @@ var dbAuthParams = {
 
 var DEBUG_ENABLED = true;
 
+
+
 encryptPassword = function (password, salt, cb) {
     var encrypted = crypto.createHmac('sha256', salt).update(password).digest('hex');
     cb(encrypted);
@@ -312,7 +314,7 @@ var userAuthenticated = function (req, cb) {
 
 var userAuthentication = function (username, password, cb) {
     log('debug', 'userAuthentication');
-    var userSql = "Select * from User where User.name = ?";
+    var userSql = "Select * from User where User.email = ?";
     var sent = false;
     var userFound = false;
     var confirmed = false;
@@ -347,7 +349,22 @@ var emailserver = email.server.connect({
     port: eMailAuth.port,
     ssl: eMailAuth.ssl
 });
+function sendError(error, res) {
+    var data = {};
+    data.success = false;
+    data.error = error;
+    log('error', error);
+    res.send(data);
+}
 
+function updateSql(sqlUpdate, params, cb) {
+    log('debug', 'updateSql');
+    var updateQuery = connection.query(sqlUpdate, params);
+    updateQuery.on('error', mySqlErrorHandler);
+    updateQuery.on('end', function () {
+        cb(true);
+    });
+}
 exports.expressCreateServer = function (hook_name, args, cb) {
     args.app.get('/admin/userpadadmin', function (req, res) {
 
@@ -380,6 +397,113 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         };
         res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_user.ejs", render_args));
     });
+
+
+
+
+    function notRegisteredUpdate(userid, groupid, userRole, email) {
+        var userGroupSql = "INSERT INTO UserGroup VALUES(?, ?, ?)";
+        updateSql(userGroupSql, [userid, groupid, userRole], function (success) {
+            if (success) {
+                var deleteNotRegisteredSql = "DELETE FROM NotRegisteredUsersGroups where groupID = ? and email = ?";
+                updateSql(deleteNotRegisteredSql, [groupid, email], function (success) {
+                });
+            }
+        });
+    }
+
+    function checkInvitations(email, userid, cb) {
+        var userNotRegisteredSql = "select * from NotRegisteredUsersGroups where email = ?";
+        var notRegistereds = [];
+        var queryInstances = connection2.query(userNotRegisteredSql, [email]);
+        queryInstances.on('error', mySqlErrorHandler);
+        queryInstances.on('result', function (foundInstance) {
+            connection2.pause();
+            notRegistereds.push(foundInstance);
+            connection2.resume();
+        });
+        queryInstances.on('end', function () {
+            if (notRegistereds.length < 1) {
+                cb();
+            }
+            for (var i = 0; i < notRegistereds.length; i++) {
+                notRegisteredUpdate(userid, notRegistereds[i].groupID, notRegistereds[i].Role, email);
+                if ((i + 1) == notRegistereds.length)
+                    cb();
+            }
+        });
+    }
+
+
+
+/*    var registerUser = function (user, cb) {
+        if (user.password != user.passwordrepeat) {
+            cb(false, PASSWORD_WRONG);
+            return false; // break execution early
+        }
+
+        var Ergebnis = user.email.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
+        if (Ergebnis == null) {
+            cb(false, NO_VALID_MAIL);
+            return false; // break execution early
+        }
+        if (user.password == "") {
+            cb(false, PW_EMPTY);
+            return false; // break execution early
+        }
+        var existUser = "SELECT * from User where User.name = ?";
+        var retValue = existValueInDatabase(existUser, [user.email], function (exists) {
+            if (exists) {
+                cb(false, USER_EXISTS);
+            } else {
+                getPassword(function (consString) {
+                    var msg = eMailAuth.registrationtext;
+                    msg = msg.replace(/<url>/, user.location + "confirm/" + consString);
+                    var message = {
+                        text: msg,
+                        from: eMailAuth.registrationfrom,
+                        to: user.email + " <" + user.email + ">",
+                        subject: eMailAuth.registrationsubject
+                    };
+
+                    var nodemailer = require('nodemailer');
+                    var transport = nodemailer.createTransport("sendmail");
+                    if (eMailAuth.smtp == "false")
+                        transport.sendMail(message);
+                    else {
+                        emailserver.send(message, function (err) {
+                            if (err) {
+                                log('error', err);
+                            }
+                        });
+                    }
+                    createSalt(function (salt) {
+                        encryptPassword(user.password, salt, function (encrypted) {
+                            var addUserSql = "INSERT INTO User VALUES(null, ?,?, 0, 0, ?,?,?,1)";
+                            var addUserQuery = connection.query(addUserSql, [user.email, encrypted, user.fullname, consString, salt]);
+                            addUserQuery.on('error', mySqlErrorHandler);
+                            addUserQuery.on('result', function (newUser) {
+                                connection.pause();
+                                checkInvitations(user.email, newUser.insertId, function () {
+                                    addUserToEtherpad(newUser.insertId, function () {
+                                        connection.resume();
+                                    });
+                                });
+
+                            });
+                            addUserQuery.on('end', function () {
+                                cb(true, null);
+                            });
+                        });
+                    });
+                });
+            }
+            return exists;
+        });
+        return retValue; // return status of function call
+};
+
+*/
     args.app.get('/logout', function (req, res) {
         req.session.userId = null;
         req.session.username = null;
@@ -387,12 +511,14 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         req.session.baseurl = null;
     });
     args.app.get('/login', function (req, res) {
+        var activated = req.query.act;
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                  res.redirect(req.session.baseurl + "/dashboard");
             } else {
                 var render_args = {
-                    errors: []
+                    errors: [],
+                    newuser: activated
                 };
                 res.send(eejs.require("ep_maadix/templates/login.ejs", render_args));
             }
@@ -855,6 +981,286 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             });
         });
 });
+/*Users funtions*/
+
+    args.app.get('/confirm/:token', function (req, res) {
+        userAuthenticated(req, function (authenticated) {
+            if (authenticated) {
+                 res.redirect(req.session.baseurl + "/dashboard");
+            } else {
+                var render_args = {
+                    errors: [],
+                    tok: req.params.token
+                };
+                res.send(eejs.require("ep_maadix/templates/confirm.ejs", render_args));
+            }
+        });
+    });
+
+
+    args.app.post('/confirminvitation', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            var user = {};
+            user.fullname = fields.fullname;
+            user.email = fields.email;
+            user.password = fields.password;
+            user.passwordrepeat = fields.passwordrepeat;
+            user.username = fields.username;
+            user.tok = fields.tok;
+            user.location = fields.location;
+  
+
+        var Ergebnis = user.email.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
+        if (Ergebnis == null) {
+            sendError('No valid E-Mail', res);
+            return false; // break execution early
+        }
+        if (user.username == "") {
+            sendError('Requierd field', res);
+            return false; // break execution early
+        }
+
+        if (user.password == "") {
+            sendError('Password is empty', res);
+            return false; // break execution early
+        }
+        if (user.password != user.passwordrepeat) {
+           sendError('Passwords do not match', res) ;
+            return false; // break execution early
+        }
+
+            var existInvitation = "SELECT * from User  where User.email = ? AND User.confirmationString = ?";
+            var retVal = getOneValueSql(existInvitation, [fields.email, fields.tok], function (found) {
+            if (!found) {
+              sendError('You need a valid invitation', res);
+              return false;
+            } else {
+
+            registerInvitedUser(user, function (success, error) {
+                log('degub' , error);
+                if (error){
+                  sendError(error, res);
+                  return false;
+                } else {
+                  var data = {};
+                  data.success = success;
+                  data.error = error;
+                  res.send(data);
+                  return true
+                }
+            });
+          }
+        });
+        return retVal;
+      });
+});
+
+    var registerInvitedUser = function (user, cb) {
+/*        if (user.password != user.passwordrepeat) {
+            cb(false, PASSWORD_WRONG);
+            return false; // break execution early
+        }
+
+        var Ergebnis = user.email.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
+        if (Ergebnis == null) {
+            cb(false, NO_VALID_MAIL);
+            return false; // break execution early
+        }
+        if (user.password == "") {
+            cb(false, PW_EMPTY);
+            return false; // break execution early
+        }
+*/
+        var existUsername = "SELECT * from User where User.name = ? AND User.email Not like ?";
+        var retValue = existValueInDatabase(existUsername, [user.username, user.email], function (exists) {
+            if (exists) {
+                cb(false, 'Username not available');
+            } else {
+                    createSalt(function (salt) {
+                        encryptPassword(user.password, salt, function (encrypted) {
+                            /* Fields in User table are: name, email, password, confirmed, FullName, confirmationString, salt, active*/
+                              /*var sql2 = "Update User SET name = ?, password = ?, confirmed = 1, FullName =?, salt = ?, active=1 WHERE User.email = ?";
+                              updateSql(sql2, [user.username, encrypted, user.fullname, salt, user.email], function (updated) {
+                              if(updated){
+                            */
+                            var addUserSql = "Update User SET name = ?, password = ?, confirmed = 1, FullName =?, salt = ?, active=1 WHERE User.email = ?";
+                            var addUserQuery = connection.query(addUserSql, [user.username, encrypted, user.fullname, salt, user.email]);
+                            log('debug', addUserQuery);
+
+                            addUserQuery.on('error', function(err) {
+                                mySqlErrorHandler(err);
+                                cb('false','Unable to activate user');
+                            });
+                              addUserQuery.on('result', function () {
+                              cb(true, null);
+
+                            });
+                            
+                            addUserQuery.on('end', function () {
+                            });
+
+                        });
+                    });
+            }
+            return exists;
+        });
+        return retValue; // return status of function call
+};
+
+   args.app.post('/inviteUsers', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            userAuthenticated(req, function (authenticated) {
+                if (authenticated) {
+                    if (!fields.groupId) {
+                        sendError('Group ID not defined', res);
+                        return;
+                    } else if (!fields.userEmail) {
+                        sendError('No User given', res);
+                        return;
+                    }
+                    var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
+                    getAllSql(isOwnerSql, [req.session.userId, fields.groupId], function (userGroup) {
+                        if (!(userGroup[0].Role < 2)) {
+                            sendError('You can not send invitations to this group', res);
+                        } else {
+                            var data = {};
+                            data.success = true;
+                            getUser(req.session.userId, function (found, currUser) {
+                                    if (fields.userEmail != "") {
+                                        var userEmail = fields.userEmail;
+                                        inviteUser(userEmail, fields.location, fields.groupId, fields.UserRole, res, currUser[0].name);
+                                    }
+                                res.send(data);
+                            });
+                        }
+                    });
+                } else {
+                    sendError("You are not logged in!", res);
+                }
+            });
+        });
+});
+    function inviteUser(userN, location, groupID, UserRole, res, currUserName) {
+        var getUserSql = "select * from User where User.email = ?";
+        getAllSql(getUserSql, [userN], function (user) {
+            if (user[0] != null && user[0] != undefined && user.length > 0) {
+                inviteRegistered(user[0].name, currUserName, location, user[0].userID, groupID,UserRole, res);
+            } else {
+                    getPassword(function (consString) {
+                        /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
+                        
+                        var addUserSql = "INSERT INTO User VALUES(null,?, ?,null, 0 ,null ,?, null, 0)";
+    
+                        var addUserQuery = connection.query(addUserSql, [userN, userN,consString]);
+                        addUserQuery.on('error', mySqlErrorHandler);
+                        addUserQuery.on('result', function (newUser) {
+                            connection.pause();
+//Maddish: crea el usuario pero se para. no envia mail y no añade usuario a grupo
+                            addUserToEtherpad(newUser.insertId, function () {
+                                    connection.resume();
+                               inviteUnregistered(groupID,UserRole, currUserName, location, userN,consString,newUser.insertId,function (error) {
+                                    log('error', error);
+
+                                });
+                            });
+                        });
+                        addUserQuery.on('end', function () {
+                        });
+                      });
+            }
+        });
+    }
+
+    function inviteRegistered(email, inviter, location, userID, groupID,UserRole, res) {
+        var getGroupSql = "select * from Groups where Groups.groupID = ?";
+        getAllSql(getGroupSql, [groupID], function (group) {
+            var msg = eMailAuth.invitationmsg;
+            msg = msg.replace(/<groupname>/, group[0].name);
+            msg = msg.replace(/<fromuser>/, inviter);
+            msg = msg.replace(/<url>/, location);
+            
+            var message = {
+                text: msg,
+                from: eMailAuth.invitationfrom,
+                to: email + " <" + email + ">",
+                subject: eMailAuth.invitationsubject
+            };
+            if (eMailAuth.smtp == "false") {
+                var nodemailer = require('nodemailer');
+                var transport = nodemailer.createTransport("sendmail");
+                transport.sendMail(message);
+            }
+            else {
+                emailserver.send(message, function (err) {
+                    if (err) {
+                        log('error', err);
+                    }
+                });
+            }
+
+            var existGroupSql = "select * from UserGroup where userID = ? and groupID = ?";
+            getOneValueSql(existGroupSql, [userID, groupID], function (found) {
+                if (found) {
+                    sendError('One ore more user are already in Group', res);
+                } else {
+                    var sqlInsert = "INSERT INTO UserGroup Values(?,?,?)";
+                    var insertQuery = connection.query(sqlInsert, [userID, groupID,UserRole]);
+                    insertQuery.on('error', mySqlErrorHandler);
+                    insertQuery.on('end', function () {
+                    });
+                }
+            });
+        });
+    }
+/* Function args:
+  inviteUnregistered(groupID,UserRole, currUserName, location, userN,consString,newUser.insertId, res);
+*/
+    function inviteUnregistered(groupID,UserRole, name, location, email,consString,userID, res) {
+        var getGroupSql = "select * from Groups where Groups.groupID = ?";
+        var queryInstances = connection.query(getGroupSql, [groupID]);
+        queryInstances.on('error', mySqlErrorHandler);
+        queryInstances.on('result', function (group) {
+            var msg = eMailAuth.invitateunregisterednmsg;
+            msg = msg.replace(/<groupname>/, group.name);
+            msg = msg.replace(/<fromuser>/, name);
+            var urlTok= location + 'confirm/' + consString;
+            msg = msg.replace(/<url>/, urlTok);
+            var message = {
+                text: msg,
+                from: eMailAuth.invitationfrom,
+                to: email + " <" + email + ">",
+                subject: eMailAuth.invitationsubject
+            };
+            if (eMailAuth.smtp == "false") {
+                var nodemailer = require('nodemailer');
+                var transport = nodemailer.createTransport("sendmail");
+                transport.sendMail(message);
+            }
+            else {
+                emailserver.send(message, function (err) {
+                    if (err) {
+                        log('error', err);
+                    }
+                });
+            }
+            var existGroupSql = "select * from UserGroup where userID = ? and groupID = ?";
+            getOneValueSql(existGroupSql, [userID,groupID ], function (found) {
+                if (found) {
+                    sendError('One ore more user are already Invited to this Group', res);
+                } else {
+                    var sqlInsert = "INSERT INTO UserGroup Values(?,?,?)";
+                    var insertQuery = connection.query(sqlInsert, [userID, groupID,UserRole]);
+                    insertQuery.on('error', mySqlErrorHandler);
+                    insertQuery.on('end', function () {
+                    });
+
+                }
+            });
+        });
+    }
+
+/*END Users functions*/
+
     args.app.get('/dashboard', function (req, res) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {

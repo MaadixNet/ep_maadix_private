@@ -89,7 +89,8 @@
 <script>
     		$(document).ready(function(){
 				$('#logout').click(function(e){
-    				e.preventDefault();
+    				//e.preventDefault();
+                                  e.defaultPrevented();
     			    
     				var data = {};
     				var loc = document.location, port = loc.port == "" ? (loc.protocol == "https:" ? 443
