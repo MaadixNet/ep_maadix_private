@@ -39,6 +39,16 @@ limitations under the License. -->
 				hooks.aCallAll('documentReady', 'admin/user_pad_users');
 			});
 		}());
+          $(document).ready(function(){
+
+console.log("document.URL : "+document.URL);
+console.log("document.location.href : "+document.location.href);
+console.log("document.location.origin : "+document.location.origin);
+console.log("document.location.hostname : "+document.location.hostname);
+console.log("document.location.host : "+document.location.host);
+console.log("document.location.pathname : "+document.location.pathname);
+console.log('BAse url ' +baseURL);
+});
 	</script>
 	<link rel="stylesheet" href="../../static/plugins/ep_maadix/static/css/useradministration.css" type="text/css" />
 <% e.begin_block("styles"); %>
@@ -68,11 +78,11 @@ limitations under the License. -->
                                 </div>
 
 				<h2>Users and groups</h2>
-				<h3>Create a new user account</h3>
+				<h3>Invite a new user </h3>
+                                <h5>Iviting a user will  send an email to the new user with an activation link</h5>
 				<div>
 					<form name="Add user" id="add-user">
 						<input type="text" placeholder="E-mail of new user" id="name-of-user">
-						<input type="password" placeholder="PW of new user" id="pw-of-user">
 						<input type="button" value="Create" id="addUserButton">
 						<a id="textfield-user"></a>
 					</form>

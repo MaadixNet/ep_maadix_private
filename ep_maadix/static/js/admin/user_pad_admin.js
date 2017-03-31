@@ -425,7 +425,8 @@ function users(hooks, context,cb){
 			pathComponents.length - 3).join('/')
 			+ '/', resource = baseURL.substring(1)
 			+ "socket.io";
-			
+        urlNoSlash = document.location.origin;
+                        		
 	//socket = io.connect(url + "pluginfw/admin/user_pad", {resource : resource});
         var room = url + "pluginfw/admin/user_pad";
         socket = io.connect(room, {path: baseURL + "socket.io", resource : resource});
@@ -507,7 +508,8 @@ function users(hooks, context,cb){
     	$('#addUserButton').unbind('click').click(function(e){
     		var user = {};
     		user.name = $("#name-of-user").val();
-    		user.pw = $("#pw-of-user").val();
+    		//user.pw = $("#pw-of-user").val();
+                user.baseurl = urlNoSlash + baseURL;
     		addUser(user);	
     	});	
 	}
@@ -775,7 +777,7 @@ function main(hooks,context,cb){
 			.split('/'),
 	// Strip admin/plugins
 	baseURL = pathComponents.slice(0,
-			pathComponents.length - 4).join('/')
+			pathComponents.length - 2).join('/')
 			+ '/', resource = baseURL.substring(1)
 			+ "socket.io";
 //	console.log(resource);

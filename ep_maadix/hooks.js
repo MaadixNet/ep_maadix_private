@@ -1885,21 +1885,50 @@ exports.socketio = function (hook_name, args, cb) {
         });
 
         socket.on("add-user", function (user, cb) {
-            var existUser = "SELECT * from User where User.name = ?";
+                        /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
+
+        var Ergebnis = user.name.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
+        if (Ergebnis == null) {
+            cb(false, 'Email is not valid!');
+        }
+            var existUser = "SELECT * from User where User.email = ?";
             existValueInDatabase(existUser, [user.name], function (exists) {
                 if (exists) {
                     cb(false, 'User already exisits!');
                 } else {
                     var addUserSql = "";
                     createSalt(function (salt) {
-                        encryptPassword(user.pw, salt, function (encrypted) {
-                            addUserSql = "INSERT INTO User VALUES(null, ?,?,1,'','klfdsa',?,1)";
-                            var addUserQuery = connection.query(addUserSql, [user.name, encrypted, salt]);
+                        getPassword(function (consString) {
+                        /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
+                            addUserSql = "INSERT INTO User VALUES(null,?, ?,null, 0 ,null ,?, ?, 0)";
+                            var addUserQuery = connection.query(addUserSql, [user.name,user.name, consString, salt]);
                             addUserQuery.on('error', mySqlErrorHandler);
                             addUserQuery.on('result', function (newUser) {
                                 connection.pause();
                                 addUserToEtherpad(newUser.insertId, function () {
                                     connection.resume();
+                            var msg = eMailAuth.invitationfromadminmsg;
+                            var urlTok= user.baseurl + 'confirm/' + consString;
+                            msg = msg.replace(/<url>/, urlTok);
+                            var message = {
+                                text: msg,
+                                from: eMailAuth.invitationfrom,
+                                to: email + " <" + user.name + ">",
+                                subject: eMailAuth.invitationsubject
+                            };
+                            if (eMailAuth.smtp == "false") {
+                                var nodemailer = require('nodemailer');
+                                var transport = nodemailer.createTransport("sendmail");
+                                transport.sendMail(message);
+                            }
+                            else {
+                                emailserver.send(message, function (err) {
+                                    log('debub' , 'message sent');
+                                    if (err) {
+                                        log('error', err);
+                                    }
+                                });
+                            }
                                 });
                             });
                             addUserQuery.on('end', function () {
