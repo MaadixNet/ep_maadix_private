@@ -15,7 +15,7 @@ background-color: #f0f3f6;
 header {
  background-color: #d7dde4;
 min-height:50px;
-display: flex;
+/*display: flex;*/
 -webkit-box-align: center;
 -moz-box-align: center;
 align-items: center;
@@ -24,33 +24,41 @@ justify-content: space-between;
 padding: 3px 12px;
 }
 
-.header .header-block-buttons {
-text-align: center;
+header .header-block-buttons {
 margin-left: auto;
 margin-right: auto;
 white-space: nowrap;
+width: 100%;
+float: left;
+min-width:320px;
+
 }
-.header .header-block-nav {
+header .header-block-nav {
 margin-left: auto;
 white-space: nowrap;
-padding-right: 15px;
+width: 100%;
+display: inline-block;
+text-align: right;
 }
 
+header h2.title {text-align:center;margin:0;}
 article {padding:2%;}
 a {text-decoration:none; color:#333;}
 a:hover {color:#2D4162;}
 a.header-btn {padding: 7px;}
 
 .clear {clear:both;}
+.center {text-align:center;}
 /********************COLS************/
 
 .col-md-6 {width:50%;float:left; min-width:320px;}
-.col-md-6 form.search {margin: 18.7167px; float:right;}
+.col-md-4 {width:33.33%;float:left; min-width:320px;}
 
 a.padClick {cursor:pointer;}
 hr {color:#ddd;}
 hr.ble{color:#2D4162;}
-
+.success {color: green;}
+.error {color: red;}
 /**********************************************************************/
 
 /******************TABLES ************************************/
@@ -93,6 +101,7 @@ td, th {
   text-align: left; 
 
 }
+th.wiprec {width:20%;}
 
 /***********************************************************/
 /*		Lightbox				  */
@@ -163,8 +172,48 @@ td, th {
   display: block;
   width: 250px;
 }
-/********************COLS************/
 
+.margin20 {margin-bottom:20px;}
+.margintrop0 {margin-top:0;}
+/********************FROMS***************/
+#formblock {width: 400px; min-width:320px; margin: 0 auto;}
+form input {margin: 20px 0 ;}
+#formblock input {display:block; width:100%;}
+#formblock form {padding:4%;}
+form.white {background-color: #FFF;}
+form .title {text-align:center;}
+.col-md-6 form.right {margin: 18.7167px; float:right;}
+
+/******************BUTTONS***************/
+
+button { font-family: 'Open Sans',sans-serif;
+font-size: 1rem;
+line-height: 1.5;
+}
+button, html [type="button"], [type="reset"], [type="submit"]{
+  color:#ffffff;
+  background-color: #2D4162;
+  border-color: #2D4162;
+  cursor: pointer;
+}
+
+button:hover {
+  color: #ffffff;
+  background-color: #687996;
+  border-color: #687996;
+ }
+
+#formblock button{padding:9px;}
+
+/*************Tabc sumenu************/
+ul.submenu li {list-style:none; display:inline-block;}
+ul.submenu li a {padding:8px; border: 1px solid #ddd;background-color: #FFF; color:#687996;}
+
+ul.submenu li a.active {background-color: #2D4162; color:#FFF;}
+ul.submenu li a[href]:hover {border: 1px solid #687996; color:#2D4162; }
+
+/********************COLS************/
+.col-md-12 {width:100%;}
 .col-md-6 {width:50%;float:left;}
 /*****sortable table styles********/
 

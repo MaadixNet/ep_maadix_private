@@ -29,6 +29,15 @@ Then use the provided [SQL script](/sql_listing.sql) to create the schema:
 
     mysql -u USER -p < sql_listing.sql
 
+This pluging has been developed for an etherpad-lite installation with reverse proxy under a subpath (e.g. mydomain.com/etherpad/ )
+For now you still need  to add the following line in your Vhost config, in order to redirect properly non-logged in users  
+
+    RedirectMatch Permanent ^/login$ /etherpad/login  
+
+where /etherpad/ is the nemae of your subpath.  
+
+It should also work for an installation without Reverse Proxy, but it has not been tested.
+
 Screenshots
 -----------
 

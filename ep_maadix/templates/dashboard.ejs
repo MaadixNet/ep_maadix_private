@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 	<head>
-		<title>Etherpad dashboard</title>
+		<title>Dashboard</title>
 
 		<meta charset="utf-8"> 
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
@@ -15,7 +15,7 @@
                 <script src="static/plugins/ep_maadix/static/js/client/jquery.js" type="text/javascript"></script>
                 <script src="static/plugins/ep_maadix/static/js/client/documentReadyRefresh.js" type="text/javascript"></script>
                 <script src="static/plugins/ep_maadix/static/js/client/retina.js" type="text/javascript"></script>
-                <script src="static/plugins/ep_maadix/static/js/client/etherpad.js" type="text/javascript"></script>
+                <script src="static/plugins/ep_maadix/static/js/client/end.js" type="text/javascript"></script>
                 
                 <link href="static/plugins/ep_maadix/static/css/custom.css" rel="stylesheet"> 
 
@@ -24,8 +24,7 @@
 	<header>
 		<div class="header-block header-block-buttons">
 			<a class="btn btn-sm header-btn" href="">My Groups</a> | 
-			<a class="btn btn-sm header-btn">My Pads</a> | 
-			<a class="btn btn-sm header-btn">My Profile</a> 
+                        <a class="btn btn-sm header-btn" href="user/<%= userid %>">My Profile</a> 
 		</div>
 	        <div class="header-block header-block-nav">
 				<span class="name"><%= username %></span> | <a class="dropdown-item" href="./logout">Logout</a>
@@ -40,7 +39,13 @@
                                     <h3 class="title" lang="en"> Manage Groups</h3>
 				</div>
 				<div class="col-md-6">
-					 <form style="margin-bottom:5px"><input  type="text" id="search" placeholder="Search"></input></form>
+                                  <div class="inputBlock">
+                                          <h4 lang="en">Create a new Private Group</h4>
+                                          <form id="createPrivateGroupForm">
+                                                  <input type="text" placeholder="Group-Name" id="groupName" autocomplete="off"></input>
+                                                  <button type="submit" lang="en" id="createPrivateGroup">Create</button>
+                                          </form>
+                                  </div>
 				</div>
 			    </div>	
 			</div>
@@ -58,32 +63,27 @@
 				<% for(var i = 1; i <= groups.length; i++){%>
 						<tr class="visible" id="Gruppe<%= groups[i-1].groupID%>" data-role="<%= groups[i-1].Role%>">
 							<td class="first"><a href="group/<%= groups[i-1].groupID%>"><%= groups[i-1].name%></a></td>
-							<td class="role"><%if (groups[i-1].Role == 1) {%>Owner<%} else {%>User<%}%> </td>
-							<td class="first"><a href="groupusers/<%= groups[i-1].groupID%>">View/Add Users</a></td>
+                                                        <td class="userGroupRole" data-usergrouprole="<%= groups[i-1].Role%>"><span class="textrole"><%=groups[i-1].Role%></span>
+                                                        </td>
+                                                        <td class="first"><a href="groupusers/<%= groups[i-1].groupID%>">View
+                                                            <%if (groups[i-1].Role < 3) {%>/Add <%}%>
+                                                            Users</a></td>
 							<td class="first"><a href="group/<%= groups[i-1].groupID%>">View/Add Pads</a></td>
 							<%if (groups[i-1].Role == 1) {%>
 								<td title="Delete Group" class="last"><img data-groupid="<%=groups[i-1].groupID%>" data-name="<%=groups[i-1].name%>" src="./static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></img>X</td>
 							<%} else {%>
-								<td class="last">Only owner can delete a group</td>
+								<td class="last">Only Admin can delete a group</td>
 							<%}%>
 						</tr>
 				<% } %>
 				</table>
 
 			</div>
-			<div class="navigationInfo"><span id="previousPage"><<</span> <span id="currentPage"></span> to <span id="currentPageCount"></span> of <span id="pageCount"></span> Groups <span id="nextPage">>></span></div>
 			<%} else {%>
 				<h4 class="red" lang="en">You are in no Group at the moment.</h4>	
 			<%}%>	
 		</div>
 	</div>
-		<div class="inputBlock">
-			<h4 lang="en">Create a new Private Group</h4>
-			<form id="createPrivateGroupForm">
-				<input type="text" placeholder="Group-Name" id="groupName" autocomplete="off"></input>
-				<button type="submit" lang="en" id="createPrivateGroup">Create</button>
-			</form>
-		</div>
 	<div style="clear: both"></div>
 	</article>
 <script>

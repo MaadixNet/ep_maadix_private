@@ -13,12 +13,6 @@ CREATE TABLE IF NOT EXISTS `Groups` (
 	`name` varchar(255) COLLATE utf8_bin NOT NULL DEFAULT '',
 	PRIMARY KEY (`groupID`,`name`)
 	);
-CREATE TABLE `NotRegisteredUsersGroups` (
-        `email` varchar(255) NOT NULL,
-        `groupID` int(11) NOT NULL,
-        `Role` int(11) DEFAULT NULL,
-        `Token` varchar(50) COLLATE utf8_bin DEFAULT NULL,
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `User` (
 	`userID` int(11) NOT NULL AUTO_INCREMENT,

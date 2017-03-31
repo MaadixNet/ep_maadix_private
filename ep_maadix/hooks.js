@@ -49,6 +49,23 @@ encryptPassword = function (password, salt, cb) {
     cb(encrypted);
 };
 
+userRole = function (numrole,cb) {
+  var textrole = '';
+  switch (numrole) {
+    case 1:
+      textrole = 'Admin';
+      break;
+    case 2:
+      textrole = 'Editor';
+      break;
+    case 3:
+      textrole = 'User'; 
+      break;
+    default:
+      textrole = 'Undefined'; 
+  }
+  cb(textrole);
+}
 /*
  *  Common Utility Functions
  */
@@ -314,12 +331,12 @@ var userAuthenticated = function (req, cb) {
 
 var userAuthentication = function (username, password, cb) {
     log('debug', 'userAuthentication');
-    var userSql = "Select * from User where User.email = ?";
+    var userSql = "Select * from User where User.email = ? OR User.name = ?";
     var sent = false;
     var userFound = false;
     var confirmed = false;
     var active = true;
-    var queryUser = connection.query(userSql, [username]);
+    var queryUser = connection.query(userSql, [username, username]);
     queryUser.on('error', mySqlErrorHandler);
     queryUser.on('result', function (foundUser) {
         userFound = true;
@@ -400,7 +417,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 
 
 
-
+/*
     function notRegisteredUpdate(userid, groupid, userRole, email) {
         var userGroupSql = "INSERT INTO UserGroup VALUES(?, ?, ?)";
         updateSql(userGroupSql, [userid, groupid, userRole], function (success) {
@@ -434,76 +451,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         });
     }
 
-
-
-/*    var registerUser = function (user, cb) {
-        if (user.password != user.passwordrepeat) {
-            cb(false, PASSWORD_WRONG);
-            return false; // break execution early
-        }
-
-        var Ergebnis = user.email.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
-        if (Ergebnis == null) {
-            cb(false, NO_VALID_MAIL);
-            return false; // break execution early
-        }
-        if (user.password == "") {
-            cb(false, PW_EMPTY);
-            return false; // break execution early
-        }
-        var existUser = "SELECT * from User where User.name = ?";
-        var retValue = existValueInDatabase(existUser, [user.email], function (exists) {
-            if (exists) {
-                cb(false, USER_EXISTS);
-            } else {
-                getPassword(function (consString) {
-                    var msg = eMailAuth.registrationtext;
-                    msg = msg.replace(/<url>/, user.location + "confirm/" + consString);
-                    var message = {
-                        text: msg,
-                        from: eMailAuth.registrationfrom,
-                        to: user.email + " <" + user.email + ">",
-                        subject: eMailAuth.registrationsubject
-                    };
-
-                    var nodemailer = require('nodemailer');
-                    var transport = nodemailer.createTransport("sendmail");
-                    if (eMailAuth.smtp == "false")
-                        transport.sendMail(message);
-                    else {
-                        emailserver.send(message, function (err) {
-                            if (err) {
-                                log('error', err);
-                            }
-                        });
-                    }
-                    createSalt(function (salt) {
-                        encryptPassword(user.password, salt, function (encrypted) {
-                            var addUserSql = "INSERT INTO User VALUES(null, ?,?, 0, 0, ?,?,?,1)";
-                            var addUserQuery = connection.query(addUserSql, [user.email, encrypted, user.fullname, consString, salt]);
-                            addUserQuery.on('error', mySqlErrorHandler);
-                            addUserQuery.on('result', function (newUser) {
-                                connection.pause();
-                                checkInvitations(user.email, newUser.insertId, function () {
-                                    addUserToEtherpad(newUser.insertId, function () {
-                                        connection.resume();
-                                    });
-                                });
-
-                            });
-                            addUserQuery.on('end', function () {
-                                cb(true, null);
-                            });
-                        });
-                    });
-                });
-            }
-            return exists;
-        });
-        return retValue; // return status of function call
-};
-
 */
+
     args.app.get('/logout', function (req, res) {
         req.session.userId = null;
         req.session.username = null;
@@ -511,14 +460,16 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         req.session.baseurl = null;
     });
     args.app.get('/login', function (req, res) {
-        var activated = req.query.act;
+        var activated = '';
+        if (req.query.act)activated = req.query.act;
+        log('debug', activated);
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                  res.redirect(req.session.baseurl + "/dashboard");
             } else {
                 var render_args = {
                     errors: [],
-                    newuser: activated
+                    activated: activated
                 };
                 res.send(eejs.require("ep_maadix/templates/login.ejs", render_args));
             }
@@ -526,9 +477,11 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     });
     args.app.post('/login', function (req, res) {
         new formidable.IncomingForm().parse(req, function (err, fields) {
-
+            var activated = '';
+            if (req.query.act)activated = req.query.act;
             var render_args = {
-                errors: []
+                errors: [],
+                activated
             };
 
             if (!fields.email || !fields.password) {
@@ -586,8 +539,11 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         errors: [],
                                         id: currGroup[0].name,
                                         groupid: currGroup[0].groupID,
+                                        userid: req.session.userId,
                                         username: req.session.username,
+                                        baseurl: req.session.baseurl,
                                         isowner: isown,
+                                        role: currUserGroup[0].Role,
                                         pads: pads
                                     };
                                     res.send(eejs.require("ep_maadix/templates/group.ejs", render_args));
@@ -614,7 +570,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     args.app.get('/groupusers/:groupid', function (req, res) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
-                getUsersOfGroup(req.params.groupid, function (users) {
+                getUsersOfGroup(req.params.groupid,req.session.userId, function (users) {
                     getUser(req.session.userId, function (found, currUser) {
                         getGroup(req.params.groupid, function (found, currGroup) {
                             getUserGroup(req.params.groupid, req.session.userId, function (found, currUserGroup) {
@@ -635,8 +591,11 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         errors: [],
                                         id: currGroup[0].name,
                                         groupid: currGroup[0].groupID,
+                                        userid: req.session.userId,
                                         username: req.session.username,
+                                        baseurl: req.session.baseurl,
                                         isowner: isown,
+                                        role: currUserGroup[0].Role,
                                         users: users
                                     };
                                     res.send(eejs.require("ep_maadix/templates/groupusers.ejs", render_args));
@@ -812,14 +771,9 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     var deleteGroupPadsQuery = connection2.query(deleteGroupPadsSql, [fields.groupId]);
                                     deleteGroupPadsQuery.on('error', mySqlErrorHandler);
                                     deleteGroupPadsQuery.on('end', function () {
-                                        var deleteGroupNotInvited = "DELETE FROM NotRegisteredUsersGroups where NotRegisteredUsersGroups.groupID = ?";
-                                        var deleteGroupNotInvitedQuery = connection2.query(deleteGroupNotInvited, [fields.groupId]);
-                                        deleteGroupNotInvitedQuery.on('error', mySqlErrorHandler);
-                                        deleteGroupNotInvitedQuery.on('end', function () {
                                             deleteGroupFromEtherpad(fields.groupId, function () {
                                                 connection.resume();
                                             });
-                                        });
                                     });
                                 });
                             });
@@ -942,7 +896,9 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         render_args = {
                                             errors: [],
                                             padname: padID,
+                                            userid: req.session.userId,
                                             username: req.session.username,
+                                            baseurl: req.session.baseurl,
                                             groupID: req.params.groupID,
                                             groupName: currGroup[0].name,
                                             padurl: req.session.baseurl + "/p/" + req.params.padID
@@ -957,7 +913,9 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     render_args = {
                                         errors: [],
                                         padname: req.params.padID,
+                                        userid: req.session.userId,
                                         username: req.session.username,
+                                        baseurl: req.session.baseurl,
                                         groupID: req.params.groupID,
                                         groupName: currGroup[0].name,
                                         padurl: req.session.baseurl + "/p/" + req.params.padID
@@ -1053,7 +1011,173 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         });
         return retVal;
       });
-});
+        //var updateUserSql = "UPDATE User SET FullName = ? WHERE userID= ?";
+    });
+    args.app.post('/updateUserRole', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            userAuthenticated(req, function (authenticated) {
+                var data = {};
+                if (authenticated) {
+                    if (!fields.groupId) {
+                        sendError('Group-Id not defined', res);
+                        return;
+                    }
+                    if (!fields.newrole) {
+                        sendError('New Role not defined', res);
+                        return;
+                    }
+                    if (!fields.userid) {
+                        sendError('User not defined', res);
+                        return;
+                    }
+                    if (!fields.baseurl) {
+                        sendError('Url nott defined', res);
+                        return;
+                    }
+
+                    var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
+                    getAllSql(isOwnerSql, [req.session.userId, fields.groupId], function (userGroup) {
+                        if (!userGroup) {
+                            sendError('You are not in this Group.', res);
+                        }
+                        if ((userGroup[0].Role > fields.newrole )) {
+                            sendError('You cannot assign a Role higher than yours', res);
+                        } else {
+                            var updateUserRole = "UPDATE UserGroup SET Role = ?  WHERE groupID = ? AND userID = ?";
+                            var updateGroupQuery = connection.query(updateUserRole, [fields.newrole, fields.groupId, fields.userid]);
+                            updateGroupQuery.on('error', mySqlErrorHandler);
+                            updateGroupQuery.on('end', function () {
+                                data.success = true;
+                                data.error = null;
+                                res.send(data);
+                            });
+                        }
+
+                    });
+                } else {
+                    res.send("You are not logged in!!");
+                }
+            });
+        });
+    });
+
+    args.app.get('/user/:userId', function (req, res) {
+        userAuthenticated(req, function (authenticated) {
+            if (!authenticated || req.session.userId != req.params.userId ) {
+                 res.redirect(req.session.baseurl + "/dashboard");
+            } else {
+        
+              var getUserData = "SELECT * from User where User.userID = ?";
+              getAllSql(getUserData, [req.session.userId ], function (user) {
+                if (!user) {
+                  sendError('You are not allowed to edit this user', res);
+                  return false;
+                } else {
+                  
+
+                  var render_args = {
+                    errors: [],
+                    userid: req.session.userId,
+                    baseurl: req.session.baseurl,
+                    user: user
+                  };
+                  res.send(eejs.require("ep_maadix/templates/user.ejs", render_args));
+                }
+             });
+           }
+        });
+    });
+
+    args.app.post('/updateprofile', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            var user = {};
+            user.fullname = fields.fullname;
+            user.email = fields.email;
+            user.password = fields.password;
+            user.passwordrepeat = fields.passwordrepeat;
+            user.username = fields.username;
+            user.requserid = fields.requserid;
+            user.location = fields.location;
+
+        
+        var Ergebnis = user.email.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
+        if (user.email && Ergebnis == null) {
+            sendError('No valid E-Mail', res);
+            return false; // break execution early
+        }
+        if (user.username == "") {
+            //sendError('Requierd field', res);
+            //return false; // break execution early
+        }
+
+        if (user.password != user.passwordrepeat) {
+           sendError('Passwords do not match', res) ;
+            return false; // break execution early
+        }
+        //Users can only update their own profile
+        if (fields.userid != req.session.userId) {
+            sendError('You are not allowed to edit this user', res);
+            return false;
+        }
+
+            var existUser = "SELECT * from User where userID = ?";
+            var retVal = getAllSql(existUser, [req.session.userId], function (userdata) {
+              if (!userdata) {
+                  sendError('Invalid User', res);
+                  return false;
+              } else {
+                  createSalt(function (salt) {
+                    encryptPassword(user.password, salt, function (encrypted) {
+                      if (user.username == "") {
+                          user.username = userdata[0].name;
+                      }
+                      if (user.fullname == "") {       
+                          user.fullname = userdata[0].FullName;
+                      }
+                      if (user.email == "") {       
+                          user.email = userdata[0].email;
+                      }
+       
+                      var updateUserSql = "UPDATE User SET name = ?, FullName = ?, email = ?";
+                      var params = [user.username, user.fullname, user.email];
+                        if (user.password != ""){
+                          user.password = encrypted;
+                          user.salt = salt; 
+                          updateUserSql += ", password = ?, salt =?";
+                          params.push(user.password,salt);
+                          
+                          }
+                        updateUserSql += " WHERE userID = ?";
+                        params.push(req.session.userId);
+                        var data = {};
+                        updateSql(updateUserSql, params, function (success) {
+                          data.success = success;
+                          res.send(data);
+                        });
+                       /* updateUserProfile(user function (success, error) {
+                           log('degub' , error);
+                            if (error){
+                              sendError(error, res);
+                              return false;
+                            } else {
+                              var data = {};
+                              data.success = success;
+                              data.error = error;
+                              res.send(data);
+                              return true
+                            }
+                        });
+                        */
+                      });
+                  });
+ 
+              } 
+            });
+        return retVal;
+      });
+    });
+
+
 
     var registerInvitedUser = function (user, cb) {
 /*        if (user.password != user.passwordrepeat) {
@@ -1120,9 +1244,13 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     }
                     var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
                     getAllSql(isOwnerSql, [req.session.userId, fields.groupId], function (userGroup) {
-                        if (!(userGroup[0].Role < 2)) {
+                        if (!(userGroup[0].Role < 3)) {
                             sendError('You can not send invitations to this group', res);
-                        } else {
+
+                        } else if ( fields.UserRole < userGroup[0].Role ){
+                             sendError('You can not assign a role hgher than yours', res);
+
+                        } else  {
                             var data = {};
                             data.success = true;
                             getUser(req.session.userId, function (found, currUser) {
@@ -1170,11 +1298,11 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             }
         });
     }
-
+/* functions params inviteRegistered(user[0].name, currUserName, location, user[0].userID, groupID,UserRole, res);*/
     function inviteRegistered(email, inviter, location, userID, groupID,UserRole, res) {
         var getGroupSql = "select * from Groups where Groups.groupID = ?";
         getAllSql(getGroupSql, [groupID], function (group) {
-            var msg = eMailAuth.invitationmsg;
+/*            var msg = eMailAuth.invitationmsg;
             msg = msg.replace(/<groupname>/, group[0].name);
             msg = msg.replace(/<fromuser>/, inviter);
             msg = msg.replace(/<url>/, location);
@@ -1197,7 +1325,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     }
                 });
             }
-
+*/
             var existGroupSql = "select * from UserGroup where userID = ? and groupID = ?";
             getOneValueSql(existGroupSql, [userID, groupID], function (found) {
                 if (found) {
@@ -1206,7 +1334,32 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     var sqlInsert = "INSERT INTO UserGroup Values(?,?,?)";
                     var insertQuery = connection.query(sqlInsert, [userID, groupID,UserRole]);
                     insertQuery.on('error', mySqlErrorHandler);
-                    insertQuery.on('end', function () {
+                    insertQuery.on('result', function () {
+            var msg = eMailAuth.invitationmsg;
+            msg = msg.replace(/<groupname>/, group[0].name);
+            msg = msg.replace(/<fromuser>/, inviter);
+            msg = msg.replace(/<url>/, location);
+
+            var message = {
+                text: msg,
+                from: eMailAuth.invitationfrom,
+                to: email + " <" + email + ">",
+                subject: eMailAuth.invitationsubject
+            };
+            if (eMailAuth.smtp == "false") {
+                var nodemailer = require('nodemailer');
+                var transport = nodemailer.createTransport("sendmail");
+                transport.sendMail(message);
+            }
+            else {
+                emailserver.send(message, function (err) {
+                    if (err) {
+                        log('error', err);
+                    }
+                });
+            }
+
+
                     });
                 }
             });
@@ -1238,6 +1391,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             }
             else {
                 emailserver.send(message, function (err) {
+                    log('debub' , 'message sent');
                     if (err) {
                         log('error', err);
                     }
@@ -1259,6 +1413,36 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         });
     }
 
+    args.app.post('/deleteUserFromGroup', function (req, res) {
+        new formidable.IncomingForm().parse(req, function (err, fields) {
+            userAuthenticated(req, function (authenticated) {
+                if (authenticated) {
+                    if (!fields.userID || fields.userID == "" || !fields.groupID || fields.groupID == "") {
+                        sendError('No User ID or Group ID given', res);
+                    } else {
+                        var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
+                        getAllSql(isOwnerSql, [req.session.userId, fields.groupID], function (userGroup) {
+                            if (!(userGroup[0].Role < 3)) {
+                                sendError('You are not not allowed to remove users frfom this group!!', res);
+                                return false;
+                            } else {
+                                var deleteUserFromGroupSql = "Delete from UserGroup where userID = ? and groupID = ?";
+                                var data = {};
+                                updateSql(deleteUserFromGroupSql, [fields.userID, fields.groupID], function (success) {
+                                    data.success = success;
+                                    res.send(data);
+                                });
+                                return true;
+                            }
+                        });
+                    }
+                } else {
+                    res.send("You are not logged in!!");
+                }
+            });
+        });
+});
+
 /*END Users functions*/
 
     args.app.get('/dashboard', function (req, res) {
@@ -1268,6 +1452,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 		 getAllSql(sql, [req.session.userId], function (groups) {
                  var render_args = {
                     username: req.session.username,
+                    userid: req.session.userId,
+                    baseurl: req.session.baseurl,
 		    groups: groups
 		    
                 };
@@ -1376,10 +1562,10 @@ function getPadsOfGroup(id, padname, cb) {
         cb(allPads);
     });
 }
-function getUsersOfGroup(id, cb) {
+function getUsersOfGroup(id,userID, cb) {
     var allUsers= [];
-    var allSql = "select User.name, User.FullName, User.userID, UserGroup.Role from User left join UserGroup on(UserGroup.userID = User.userID) where UserGroup.groupID = ?";
-    var queryUsers = connection.query(allSql, [id]);
+    var allSql = "select User.name, User.email, User.active, User.FullName, User.userID, UserGroup.Role from User left join UserGroup on(UserGroup.userID = User.userID) where ( UserGroup.groupID = ? AND UserGroup.userID NOT LIKE ?);";
+    var queryUsers = connection.query(allSql, [id, userID]);
     queryUsers.on('error', mySqlErrorHandler);
     queryUsers.on('result', function (foundUsers) {
         log('debug', 'getUsersOfGroup result');
@@ -1387,7 +1573,7 @@ function getUsersOfGroup(id, cb) {
         var user = {};
         user.name = foundUsers.name;
         if (user.name != "") {
-            allUsers.push(user);
+            allUsers.push(foundUsers);
             connection.resume();
         } else {
             connection.resume();

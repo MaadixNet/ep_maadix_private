@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 	<head>
-		<title>Etherpad</title>
+		<title>Users</title>
 
 		<meta charset="utf-8"> 
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
@@ -15,7 +15,6 @@
 		<script src="../static/plugins/ep_maadix/static/js/client/jquery.js" type="text/javascript"></script>
 		<script src="../static/plugins/ep_maadix/static/js/client/documentReadyRefresh.js" type="text/javascript"></script>
 		<script src="../static/plugins/ep_maadix/static/js/client/retina.js" type="text/javascript"></script>
-		<script src="../static/plugins/ep_maadix/static/js/client/etherpad.js" type="text/javascript"></script>
 		
 		<link href="../static/plugins/ep_maadix/static/css/custom.css" rel="stylesheet"> 
 	</head>
@@ -23,9 +22,9 @@
 	<header>
 		<div class="header-block header-block-buttons">
 			<a class="btn btn-sm header-btn" href="../dashboard">My Groups</a> | 
-			<a class="btn btn-sm header-btn">My Pads</a> | 
-			<a class="btn btn-sm header-btn">My Profile</a> 
+                        <a class="btn btn-sm header-btn" href="../user/<%= userid %>" title="view/edit profile">My Profile</a> 
 		</div>
+                 <h2 class="title" lang="en">Users in Group <%=id%> </h2>
 	        <div class="header-block header-block-nav">
 				<span class="name"><%= username %></span> | <a class="dropdown-item" href="../logout">Logout</a>
 		</div>
@@ -33,68 +32,89 @@
 	</header>	
                <article class="content items-list-page">
                     <div id="wrapper" class="title-search-block">
-                        <div class="title-block">
+                        <div class="title-block" >
                             <div class="row">
-                                <div class="col-md-6">
-				    <h2 class="title" lang="en">Group: <%=id%> </h2>			
-                                    <h3 class="subtitle" lang="en"> Pad List</h3>
+                                <div class="col-md-6 margin20">
+                                    <ul class="submenu">
+                                        <li><a href="../group/<%= groupid %>">Pads List</a></li>
+                                        <li><a class="active">Users list</a></li>
+                                    </ul>
 				</div>
 				<div class="col-md-6">
-					<form style="margin-bottom:5px"><input type="text" data-groupid="<%=groupid%>" id="search" placeholder="Search"></input></form>
+                        <%if (role < 3) {%>
+                        <div class="inputBlock">
+                          <h4 lang="en" class="margintrop0">Invite user to this group</h4>
+                          <form id="InviteUserForm" class="margin20">
+                            <input  type="mail"  placeholder="User email" id="email" autocomplete="off" required>
+                              <div style="clear: both"></div>
+                              <div class="margin20">
+                              <input type="radio" name="userRole" value="3" checked="checked"> User - Can create and edit Pads<br>
+                              <input type="radio" name="userRole" value="2"> Editor Can create, edit, delete Pads and invite Users to this group<br>
+                              <%if (role == 1 ) {%>
+                              
+                              <input type="radio" name="userRole" value="1"> Admin -  Can create, edit, delete Pads, invite Users to this group and delete this Group<br>
+                              <% } %>
+                              </div>
+                              <button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Add User</button>
+                          </form>
+
+                        </div>
+                        <% } %>
+
 				</div>
 			    </div>	
 			</div>
-                        <div class="inputBlock">
-                          <h4 lang="en">Invite user to this group</h4>
-                          <form id="InviteUserForm">
-                            <input  type="mail"  placeholder="User email" id="email" autocomplete="off">
-                              <input type="radio" name="userRole" id="userRole" value="3"> User - Can create and edit Pads<br>
-                              <input type="radio" name="userRole" id="userRole" value="2"> Editor Can create, edit, delete Pads and invite Users to this group<br>
-                              <input type="radio" name="userRole" id="userRole" value="1"> Admin - As Editor + can delete this Group<br>
-                            <button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Create</button>
-                          </form>
-
-                </div>
-
 			<%if (users.length > 0) {%> 
 				<table class="card items">
 				<thead>
 					<tr>
-						<th>User name</th>
-						<th>UserID</th>
-						<th>Delete</th>
+						<th>Name</th>
+                                                <th>Email</th>
+                                                <th calss="wiprec">Role</th>
+                                                <th>Active</th>
+                                                <%if (role < 3) {%>
+						<th>Remove</th>
+                                                <% } %>
 					<tr>
 				</thead>
 				<% for(var i = 1; i <= users.length; i++){%>
 					<tr>
 						<td class="first"><a class="padClick" data-groupid="<%=groupid%>" data-name="<%=users[i-1].name%>"><%= users[i-1].name%></a></td>
-						<td class="editDate"><%=users[i-1].userID%></td>
+						<td class="editDate"><%=users[i-1].email%></td>
+                                                <td class="userGroupRole" data-usergrouprole="<%=users[i-1].Role%>">
+                                                  
+                                                  <%if ((role < 3 && users[i-1].Role > 1) || ( role ==1 ) ) {%>
+                                                  <form type="post">
+                                                  <select id="changeRole" data-groupid="<%= groupid %>" data-userid="<%=users[i-1].userID%>">
+                                                      <% for(var c = role; c <= 3; c++){%>                      
+                                                        <% var currrorle= (c == users[i-1].Role) ? "selected":""%> 
+                                                        <option <%=currrorle %> class="newrole" value="<%=c%>" data-groupid=" <%= groupid %>" data-userid="<%=users[i-1].userID%>"><%=c%></option>
+                                                      <% } %>
+                                                    </select>
+                                                  </form>
+                                                    <% } else { %>
+                                                      <span class="textrole"><%=users[i-1].Role%></span>
+                                                    <% } %>
+                                                </td>
+                                                <td class="editDate">
+                                                <%if (users[i-1].active == 1) {%>Active<%}else {%>Inactive<%}%>
+                                                </td>
+                                                <%if (role < 3) {%>
 						<td title="Delete User" class="last">
-						<% if (isowner) {%>
-							<img data-username="<%=users[i-1].name%>" data-groupid = "<%= groupid %>" src="./../static/plugins/ep_user_pad_frontend/static/images/close-red-16.png" class="delete"></td>
-						<%} else {%>
-						Only available for goup owner
-						<% } %>
+                                                    <a data-userid="<%=users[i-1].userID%>"  data-username="<%=users[i-1].name%>" data-groupid="<%= groupid %>" id="remove" class="delete">XXX</a></td>
+                                                <% } %>
 					</tr>
 				<% } %>
 				</table>
 
 			</div>
-			<div class="navigationInfo"><span id="previousPage"><<</span> <span id="currentPage"></span> to <span id="currentPageCount"></span> of <span id="pageCount"></span> Pads <span id="nextPage">>></span></div>
 			<%} else {%>
 				<h4 class="red" lang="en">There are no pads in this group.</h4>	
 			<%}%>	
 		</div>
 	</div>
-		<div class="inputBlock">
-			<h4 lang="en">Invite user to this group</h4>
-                        <p>If there are more than one, separate with ;</p>
-			<form id="InviteUserForm">
-				<input  type="mail"  placeholder="User email" id="email" autocomplete="off">
-				<button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Create</button>
-			</form>
-		</div>
 	<div style="clear: both"></div>
+        <input id="baseurl" type="hidden" value="<%=baseurl%>"> 
 	</article>
 	 <script>
        		var getBaseURL = function(slice,cb){
@@ -121,11 +141,10 @@
     				$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"'+
     						'><span class="close"><img src="./../static/plugins/ep_user_pad_frontend/static/images/close-cyan-12.png"'+
     						'></span></div><div id="lightBoxMain">'+
-    						'<div class="headline"><img src="./../static/plugins/ep_user_'+
-    						'pad_frontend/static/images/close-red-32.png" class="headlineImage"'+
-    						'alt="Delete"><h1 lang="en" class="red">Delete "'+ $(this).data('padname') + '"'+
-    						'</h1></div><div class="content"><button lang="en" class="marginRight" id="deletePadButton"'+
-    		   				'data-padname="'+$(this).data('padname')+'" data-groupid="'+$(this).data('groupid')+
+    						'<div class="headline">'+
+    						'<h1 lang="en" class="red">Remove  "'+ $(this).data('username') + '" from this group?'+
+    						'</h1></div><div class="content"><button lang="en" class="marginRight" id="deleteUserButton"'+
+    		   				'data-userid="'+$(this).data('userid')+'" data-groupid="'+$(this).data('groupid')+
     		   				'">'+
     						'Delete</button><button lang="en" id = "cancelDelete">Cancel</button></div></div></div>');
     				$("#lightBox").css("margin-top",-$("#lightBox").height()/2);
@@ -140,21 +159,20 @@
     		   			$("#lightBox").remove();
     		   		});
     		   		
-    		   	 $("#deletePadButton").click(function(){
-    		  	    	console.log('clicked delete here');
+    		   	 $("#deleteUserButton").click(function(){
     		  	    	var data = {};
     		  			getBaseURL(2,function(baseurl){
     		  				var loc = document.location;
     		  				url = baseurl;
-	    		  	    	data.groupId = $("#deletePadButton").data('groupid');
-	    		  			data.padName = $("#deletePadButton").data('padname');
+	    		  	    	        data.groupID = $("#deleteUserButton").data('groupid');
+	    		  			data.userID = $("#deleteUserButton").data('userid');
 	    		  			console.log(data);
 	    		  	    	
 	    		  			$.ajax({
 	    		  				type: 'POST',
 	    		  				data: JSON.stringify(data),
 	    		  				contentType: 'application/json',
-	    		  				url: url + 'deletePad',	
+	    		  				url: url + 'deleteUserFromGroup',	
 	    		  				success: function(data) {
 	    		  						if(data.success){
 	    		  							window.location = loc;
@@ -176,4 +194,4 @@
     	</script>
 	</body>	
 </html>
-
+<script src="../static/plugins/ep_maadix/static/js/client/end.js" type="text/javascript"></script>
