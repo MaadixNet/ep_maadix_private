@@ -484,10 +484,12 @@ function users(hooks, context,cb){
     		var row = $(e.target).closest("th");
     		var re = /<a.+/;
     		var text = row.html().toString().replace(re, '');
-			if(text.toLowerCase() == 'id'){
-				showUsers(currentUsers, sortByIdAsc);
+                if(text.toLowerCase() == 'id'){
+                        showUsers(currentUsers, sortByIdAsc);
       		}else if(text.toLowerCase() == 'user name'){
       			showUsers(currentUsers, sortByNameAsc);
+                }else if(text.toLowerCase() == 'user email'){
+                        showUsers(currentUsers, sortByNameAsc);
       		}else if(text.toLowerCase() == '#groups'){
       			showUsers(currentUsers, sortByAmountGroupsAsc);
       		}
@@ -500,6 +502,8 @@ function users(hooks, context,cb){
 				showUsers(currentUsers, sortByIdDesc);
       		}else if(text.toLowerCase() == 'user name'){
       			showUsers(currentUsers, sortByNameDesc);
+                }else if(text.toLowerCase() == 'user email'){
+                        showUsers(currentUsers, sortByNameDesc);
       		}else if(text.toLowerCase() == '#groups'){
       			showUsers(currentUsers, sortByAmountGroupsDesc);
       		}
@@ -524,6 +528,8 @@ function users(hooks, context,cb){
 			var row = widget.find('.template tr').clone();
 			row.find(".ID").html('<a class="userID">' + users[i].id)+ '</a>';
 			row.find(".Name").html('<a href = "users/user?id='+ users[i].id+'" class="userName">' + users[i].name + '</a>');
+                          row.find(".Email").html('<a href = "users/user?id='+ users[i].id+'" class="userEmail">' + users[i].email + '</a>');
+
 			row.find(".Groups").html(users[i].amGroups);
 			row.find(".deleteButton").bind('click',function(e){
 				var row = $(e.target).closest("tr");

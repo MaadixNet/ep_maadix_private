@@ -39,16 +39,6 @@ limitations under the License. -->
 				hooks.aCallAll('documentReady', 'admin/user_pad_users');
 			});
 		}());
-          $(document).ready(function(){
-
-console.log("document.URL : "+document.URL);
-console.log("document.location.href : "+document.location.href);
-console.log("document.location.origin : "+document.location.origin);
-console.log("document.location.hostname : "+document.location.hostname);
-console.log("document.location.host : "+document.location.host);
-console.log("document.location.pathname : "+document.location.pathname);
-console.log('BAse url ' +baseURL);
-});
 	</script>
 	<link rel="stylesheet" href="../../static/plugins/ep_maadix/static/css/useradministration.css" type="text/css" />
 <% e.begin_block("styles"); %>
@@ -95,6 +85,7 @@ console.log('BAse url ' +baseURL);
 							<tr>
 								<th class="header" data-label="Id">ID<a class="sort up"></a><a class="sort down"></a></th>
 								<th class="header" data-label="user-name">User Name<a class="sort up"></a><a class="sort down"></a></th>
+                                                                <th class="header" data-label="user-email">User Email<a class="sort up"></a><a class="sort down"></a></th>
 								<th class="header" data-label="#groups">#Groups<a class="sort up"></a><a class="sort down"></a></th>
 								<th class="header" data-label="actions">Actions</th>
 							</tr>
@@ -104,12 +95,13 @@ console.log('BAse url ' +baseURL);
 							<tr>
 								<td class="ID" data-label="Id"></td>
 								<td class="Name" data-label="name"></td>
+                                                                <td class="Email" data-label="email"></td>
 								<td class="Groups" data-label="groups"></td>
 								<td class="actions" data-label="Actios">
-									<input class="newPWButton" type="button" value="Send new password">
+									<input class="newPWButton confimr" type="button" value="Send new password">
 									<span class="success"></span>
-									<input class="setActiveBtn" type="button" value="Active">
-									<input class="deleteButton" type="button" value="Delete">
+									<input class="setActiveBtn confirm" type="button" value="Active">
+									<input class="deleteButton confirm" type="button" value="Delete">
 								</td>
 							</tr>
 						</tbody>

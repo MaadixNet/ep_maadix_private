@@ -16,7 +16,7 @@
         <div id="wrapper">
             <div id="inner">
                 <% if (errors.length) { %>
-                    <div class="errors">
+                    <div class="errors center">
                     <% errors.forEach(function (item) { %>
                         <div class="error"><%= item.toString() %></div>
                     <% }) %>
@@ -37,6 +37,10 @@
                     <input type="password" name="password" id="password">
                     <input type="hidden" name="baseurl" id="baseurl" value="">
                     <button type="submit" lang="en">Login</button>
+                    <% if (settings.recover_pw) { %>
+                      <hr>
+                      <a class="" href ="./recover">Forgot Password?</a>
+                    <% } %>
                 </form>
                 </div>
             </div>

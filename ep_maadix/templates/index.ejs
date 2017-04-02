@@ -1,10 +1,74 @@
-<div id="inner">
-    <div id="button" onclick="go2Random()" data-l10n-id="index.newPad"></div>
-    <div id="label" data-l10n-id="index.createOpenPad"></div>
-    <form action="#" onsubmit="go2Name();return false;">
-        <input type="text" id="padname" autofocus x-webkit-speech>
-        <button type="submit">OK</button>
-    </form>
-    <br/>
-    Are you a registered user? <a href="login">Log in here</a>
-</div>
+<!doctype html>
+<html>
+  <head>
+    <title>Etherpad</title>
+
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="localizations" type="application/l10n+json" href="locales.json">
+    <script type="text/javascript" src="static/js/html10n.js"></script>
+    <script type="text/javascript" src="static/js/l10n.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+
+    <script src="static/plugins/ep_maadix/static/js/client/less.js" type="text/javascript"></script>
+    <script src="static/plugins/ep_maadix/static/js/client/jquery.js" type="text/javascript"></script>
+    <script src="static/plugins/ep_maadix/static/js/client/documentReadyRefresh.js" type="text/javascript"></script>
+    <script src="static/plugins/ep_maadix/static/js/client/retina.js" type="text/javascript"></script>
+    <script src="static/plugins/ep_maadix/static/js/client/end.js" type="text/javascript"></script>
+      
+    <link href="static/plugins/ep_maadix/static/css/custom.css" rel="stylesheet"> 
+
+  </head>
+  <body>
+    <% if (authenticated) { %>
+  <header>
+    <div class="header-block header-block-buttons">
+      <a class="btn btn-sm header-btn" href="./dashboard">My Groups</a> | 
+                        <a class="btn btn-sm header-btn" href="user/<%= userid %>">My Profile</a> 
+    </div>
+          <div class="header-block header-block-nav">
+        <span class="name"><%= username %></span> | <a class="dropdown-item" href="./logout">Logout</a>
+    </div>
+
+</header> 
+    <% } %>
+      <article class="content items-list-page">
+                <% if (settings.public_pads ==1) { %>
+                  <div id="formblock">
+                    <div class="inputBlock">
+                      <h4 lang="en">Create a Public Pad by specific or random name</h4>
+                      <form class="white">
+                        <input type="text" placeholder="Pad-Name" id="createPadName">
+                        <button type="submit" lang="en" id="createPublicPadByName">Create</button>
+                        <button type="submit" lang="en" id="createPublicPadRandomName" class="longButton">Create Public Pad with random name</button>
+                      </form>
+                    </div>
+                  <div class="inputBlock">
+                    <h4 lang="en">Open an existing Public Pad by Name</h4>
+                    <form class="white">
+                      <input type="text" placeholder="Pad-Name" id="openPadName">
+                      <button type="submit" lang="en" id="openPublicPad">Open</button>
+                      <input type="hidden" id="baseurl" value="">
+                    </form>
+                  </div>
+                </div>
+                <% } else { %>
+                <h3 class="title center" >Only private pads are allowed.</h3>
+                <% } %>
+                <% if (!authenticated) { %>
+                  <h4 class="title center">Are you a registered user? <a class="button" href="login">Log in here</a></h4>
+                  <% if (settings.register_enabled ==1) { %>
+                    <h4 class="title center">Want to register a new user? <a class="button" href="register">Register here</a></h4>
+                  <% } %>
+                <% } %>
+                
+      </article>
+    </body>       
+  </html>
+<script>
+  $(document).ready(function(){
+    $('#baseurl').val(window.location.origin);
+    console.log('document.location.origin ' + document.location.origin);
+  });
+</script>

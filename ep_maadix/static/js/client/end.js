@@ -34,10 +34,10 @@ var getBaseURL = function(slice,cb){
                         + '/';
 
         url = url + baseURL;
-        console.log(">>>>>");
+//        console.log(">>>>>");
         //console.log(url);
-        console.log(baseURL);
-        console.log("<<<<<<<<<");
+//        console.log(baseURL);
+//        console.log("<<<<<<<<<");
         cb(url);
 };
 
@@ -285,6 +285,115 @@ jQuery(document).ready(function(){
                 });
         });
 
+
+  $('#openPublicPad').click(function(e){
+    e.preventDefault();
+    getBaseURL(1,function(baseurl){
+      var padname = $('#openPadName').val();
+      var url = $('#baseurl').val();
+  //              console.log('here');
+      if(padname.length > 0) {
+        window.location = baseurl + "pads/" + padname;
+      } else {
+        $("#openPadName").parent().append('<div class="errorUp"><span class="arrowUp"></span><span lang="en">Please enter a name</span></div>');
+        $(".errorUp").delay(2000).fadeOut(1000);
+        console.log(url);
+
+      }
+    });
+  });
+  
+  $('#createPublicPadByName').click(function(e){
+    e.preventDefault();
+    getBaseURL(1,function(baseurl){
+      var padname = $('#createPadName').val();
+      if(padname.length > 0) {
+        window.location = baseurl +  "pads/" + padname;
+      } else {
+        $("#createPublicPadByName").after('<div class="errorUp"><span class="arrowUp"></span><span lang="en">Please enter a name</span></div>');
+        $(".errorUp").delay(2000).fadeOut(1000);
+         console.log(url);
+      }
+    });
+});
+
+        $('#formEtherpadRegister').submit(function(e){
+                e.preventDefault();
+//              console.log('test');
+                var data = {};
+                var url;
+                var loc;
+                getBaseURL(1,function(baseurl){
+                        data.location =  baseurl
+                        data.userEmail = $("#email").val();
+//                      console.log(data);
+                        post(data, baseurl+'register' ,function(data){
+                                console.log(data);
+                                if(data.error){
+                                        console.log('Data error: ' + data.error);
+                                            $(".errorUp").hide();
+                                            $("#formEtherpadRegister").before('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');                          
+
+                                }else{
+                                    console.log('success');
+                                    $(".errorUp").hide();
+                                    $("#formEtherpadRegister").before('<div class="errorUp success"><span class="arrowUp"></span><span lang="en">An email has been sent to you. Please check your inbox folder</span></div>'); 
+                                }
+                        });
+                });
+});
+
+        $('#formEtherpadRcover').submit(function(e){
+                e.preventDefault();
+//              console.log('test');
+                var data = {}; 
+                var url;
+                var loc;
+                getBaseURL(1,function(baseurl){
+                        data.location =  baseurl
+                        data.userEmail = $("#email").val();
+//                      console.log(data);
+                        post(data, baseurl+'recover' ,function(data){
+                                console.log(data);
+                                if(data.error){
+                                        console.log('Data error: ' + data.error);
+                                            $(".errorUp").hide();
+                                            $("#formEtherpadRegister").before('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');        
+
+                                }else{
+                                    console.log('success');
+                                    $(".errorUp").hide();
+                                    $("#formEtherpadRcover").before('<div class="errorUp success"><span class="arrowUp"></span><span lang="en">An email has been sent to you. Please check your inbox folder</span></div>'); 
+                                }
+                        });
+                });
+        });
+        $("#formEtherpadReset").submit(function(e) {
+                e.preventDefault();
+                var url;
+                getBaseURL(2,function(baseurl){
+                        var data = {};
+                        url = baseurl;
+                        data.email = $("#email").val();
+                        data.password = $("#password").val();
+                        data.passwordrepeat = $("#passwordrepeat").val();
+                        data.tok = $("#tok").val();
+                        data.location = url;
+                        console.log(data.location);
+                        console.log(document.location);
+                        post(data, baseurl+'resetpsw' ,function(data){
+                                        if(data.success){
+                                                window.location = url + "login?act=ok";
+                                        } else{
+                                            console.log('Data error: ' + data.error);
+                                            $(".errorUp").hide();
+                                            $("#formEtherpadReset #email").before('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
+
+
+                                        }
+                        });
+                });
+          });
 
 
         $('#InviteUserForm').submit(function(e){
