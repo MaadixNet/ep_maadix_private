@@ -28,6 +28,7 @@ var sessionManager = require('ep_etherpad-lite/node/db/SessionManager');
 var crypto = require('crypto');
 var pkg = require('./package.json');
 var formidable = require("formidable");
+var fs = require('fs');
 
 var eMailAuth = require(__dirname + '/email.json');
 var dbAuth = settings.dbSettings;
@@ -57,6 +58,16 @@ exports.clientVars = function(hook, context, callback)
 };
 */
 
+function IsJsonString(data) {
+var cleanSettings = JSON.minify(data);
+  cleanSettings = cleanSettings.replace(",]","]").replace(",}","}");
+    try {
+        JSON.parse(cleanSettings);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
 encryptPassword = function (password, salt, cb) {
     var encrypted = crypto.createHmac('sha256', salt).update(password).digest('hex');
     cb(encrypted);
@@ -1820,6 +1831,28 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             }
         });
     });
+
+    args.app.get('/help', function (req, res) {
+        userAuthenticated(req, function (authenticated) {
+            getPadsSettings(function(settings) {
+            if (authenticated) {
+                var render_args = {
+                    username: req.session.username,
+                    userid: req.session.userId,
+                    baseurl: req.session.baseurl,
+                    settings: settings
+
+                };
+                 res.send(eejs.require("ep_maadix/templates/help.ejs", render_args));
+            } else {
+                res.redirect("/login");
+            }
+        });
+      });
+    });
+
+
+
     return cb();
 };
 
@@ -1976,11 +2009,86 @@ exports.socketio = function (hook_name, args, cb) {
     io.on('connection', function (socket) {
         if (!socket.request.session.user || !socket.request.session.user.is_admin) return;
 
+/*
         socket.on("set-setting", function (key, value, cb) {
             setSetting(key, value, function (retval) {
                 cb(retval);
             });
         });
+*/
+/* TODO: Update settings.json if public pads are disllowed
+*  'requireSession' must be set it to true 
+* Thos  isthe function that saves te file in /ep_etherpad-lite/node/hooks/express/adminsettings.js
+* Must do a string replace
+* from 
+* "requireSession" : false,
+* to
+* "requireSession" : true,
+* Nedd to load fs
+* var fs = require('fs');
+*/
+/*
+    socket.on("saveSettings", function (settings) {
+      fs.writeFile('settings.json', settings, function (err) {
+        if (err) throw err;
+        socket.emit("saveprogress", "saved");
+      }); 
+    }); 
+**  Could belike that
+fs.readFile('settings.json', 'utf8', function(err, data) {
+    if (err) {
+      return console.log(err);
+    }
+     
+    var result = data.replace('\"requireSession\" \: false\,','\"requireSession\" \: true\,');
+    fs.writeFile(filePath, result, 'utf8', function(err) {
+        if (err) {
+           return console.log(err);
+        };
+    });
+});
+ALL together
+*/
+        socket.on("set-setting", function (key, value, cb) {
+            setSetting(key, value, function (retval) {
+
+                console.log('key '  + key);
+                console.log('value ' + value);
+              if (key=='public_pads' ){
+                  var sessionreq = 'false'; 
+                 fs.readFile('settings.json', 'utf8', function(err, data) {
+                    if(IsJsonString(data)){
+                          console.log('data  json is ok');
+                    } else {
+                          console.log('data  json is BAAAAAAAAd');
+                    }
+                    if (err) {
+                      return console.log(err);
+                    }
+                    if (value == 0){
+                      sessionreq = 'true';
+                    }                    
+                    console.log('seesrequiered' + sessionreq);
+                    var result = data.replace(/\"requireSession.+?(?=\,)/g,'\"requireSession\" \: ' + sessionreq);
+                    //console.log('result: ' + result);
+                    if(IsJsonString(result)){
+                          console.log('resul  json is ok')
+                      fs.writeFile('settings.json', result, 'utf8', function(err) {
+                        if (err) {
+                           return console.log(err);
+                        };
+                      });
+                    } else {
+                        console.log('malformed json'); 
+                    }
+                });               
+              }
+             cb(retval);
+            });
+        });
+
+
+
 
         socket.on("get-settings", function (cb) {
             getPadsSettings(function (settings) {
