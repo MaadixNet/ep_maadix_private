@@ -502,11 +502,11 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         var activated = '';
         if (req.query.act)activated = req.query.act;
         log('debug', activated);
-        userAuthenticated(req, function (authenticated) {
+        getPadsSettings(function(settings) {
+          userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                  res.redirect(req.session.baseurl + "/dashboard");
             } else {
-              getPadsSettings(function(settings) {
  
                 var render_args = {
                     errors: [],
@@ -514,8 +514,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     settings: settings
                 };
                 res.send(eejs.require("ep_maadix/templates/login.ejs", render_args));
-              });
             }
+          });
         });
     });
     args.app.post('/login', function (req, res) {
@@ -823,6 +823,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 
 
     args.app.get('/group/:groupid', function (req, res) {
+      getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                 getPadsOfGroup(req.params.groupid, '', function (pads) {
@@ -851,7 +852,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         baseurl: req.session.baseurl,
                                         isowner: isown,
                                         role: currUserGroup[0].Role,
-                                        pads: pads
+                                        pads: pads,
+                                        settings: settings
                                     };
                                     res.send(eejs.require("ep_maadix/templates/group.ejs", render_args));
                                 } else {
@@ -872,9 +874,12 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 res.redirect("../../login");
             }
         });
+
+      });
     });
 
     args.app.get('/groupusers/:groupid', function (req, res) {
+      getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                 getUsersOfGroup(req.params.groupid,req.session.userId, function (users) {
@@ -903,7 +908,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         baseurl: req.session.baseurl,
                                         isowner: isown,
                                         role: currUserGroup[0].Role,
-                                        users: users
+                                        users: users,
+                                        settings: settings
                                     };
                                     res.send(eejs.require("ep_maadix/templates/groupusers.ejs", render_args));
                                 } else {
@@ -924,6 +930,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 res.redirect("../../login");
             }
         });
+      });
     });
 
     args.app.post('/createGroup', function (req, res) {
@@ -1145,6 +1152,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 
 
   args.app.get('/group/:groupID/pad/:padID', function (req, res) {
+    getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
             getGroup(req.params.groupID, function (found, currGroup) {
                 getUser(req.session.userId, function (found, currUser) {
@@ -1174,6 +1182,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                             baseurl: req.session.baseurl,
                                             groupID: req.params.groupID,
                                             groupName: currGroup[0].name,
+                                            settings: settings,
                                             padurl: req.session.baseurl + "/p/" + req.params.padID
                                         };
                                         res.send(eejs
@@ -1191,6 +1200,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         baseurl: req.session.baseurl,
                                         groupID: req.params.groupID,
                                         groupName: currGroup[0].name,
+                                        settings: settings,
                                         padurl: req.session.baseurl + "/p/" + req.params.padID
                                     };
                                     res.send(eejs
@@ -1211,6 +1221,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 });
             });
         });
+      });
 });
 
     args.app.get('/pads/:id', function (req, res) {
@@ -1229,7 +1240,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     padurl: req.session.baseurl + "/p/" + req.params.id,
                     username: req.session.username,
                     userid: req.session.userId,
-                    padName: req.params.id
+                    padName: req.params.id,
+                    settings: settings
                 };
                 res.send(eejs
                     .require("ep_maadix/templates/public_pad_logged_in.ejs",
@@ -1406,6 +1418,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     });
 
     args.app.get('/user/:userId', function (req, res) {
+      getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
             if (!authenticated || req.session.userId != req.params.userId ) {
                  res.redirect(req.session.baseurl + "/dashboard");
@@ -1423,13 +1436,15 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     errors: [],
                     userid: req.session.userId,
                     baseurl: req.session.baseurl,
-                    user: user
+                    user: user,
+                    settings: settings
                   };
                   res.send(eejs.require("ep_maadix/templates/user.ejs", render_args));
                 }
              });
            }
         });
+      });
     });
 
     args.app.post('/updateprofile', function (req, res) {
@@ -1792,12 +1807,12 @@ exports.expressCreateServer = function (hook_name, args, cb) {
       var authenticated = false;
       var username = "";
       var userid = "";
+      getPadsSettings(function(settings) {
       userAuthenticated(req, function (authenticated) {
         if (authenticated){
              username = req.session.username;
              userid = req.session.userId;
         } 
-        getPadsSettings(function(settings) {
             var render_args = {
                 errors: [],
                 settings: settings,
@@ -1813,6 +1828,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     });
 
     args.app.get('/dashboard', function (req, res) {
+       getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
             if (authenticated) {
 		 var sql = "Select Groups.*, UserGroup.Role from Groups inner join UserGroup on(UserGroup.groupID = Groups.groupID) where UserGroup.userID = ?";
@@ -1821,7 +1837,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     username: req.session.username,
                     userid: req.session.userId,
                     baseurl: req.session.baseurl,
-		    groups: groups
+		    groups: groups,
+                    settings: settings
 		    
                 };
                  res.send(eejs.require("ep_maadix/templates/dashboard.ejs", render_args));
@@ -1830,6 +1847,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 res.redirect("/login");
             }
         });
+      });
     });
 
     args.app.get('/help', function (req, res) {
