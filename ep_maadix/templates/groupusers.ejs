@@ -42,6 +42,7 @@
                 </div>
 	</header>	
                <article class="content items-list-page">
+                 <% if (groupid) { %>
                     <div id="wrapper" class="title-search-block">
                         <div class="title-block" >
                             <div class="row">
@@ -121,12 +122,15 @@
 
 			</div>
 			<%} else {%>
-				<h4 class="red" lang="en">There are no pads in this group.</h4>	
+				<h4 class="red" lang="en">There are no users in this group.</h4>	
 			<%}%>	
 		</div>
 	</div>
 	<div style="clear: both"></div>
         <input id="baseurl" type="hidden" value="<%=baseurl%>"> 
+        <% } else { %>
+          <h2 class="title center">This group does not exists!</h2>
+        <% } %>
 	</article>
 	 <script>
        		var getBaseURL = function(slice,cb){

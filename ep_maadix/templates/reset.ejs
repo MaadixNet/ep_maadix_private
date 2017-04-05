@@ -35,8 +35,9 @@
                     <% }) %>
                     </div>
                 <% } %>
+                <% if (settings.recover_pw) { %>
                 <div id="formblock" class="confirm">
-
+                
                 <form id="formEtherpadReset" method="post" class="white" autocomplete="off">
                     <div class="title-block">
                       <h3 class="title" lang="en"> Reset password</h3>                    
@@ -52,6 +53,9 @@
                     <button type="submit" lang="en">Reset Password</button>
                 </form>
               </div>
+              <% } else { %>
+                  <h2 class="title center">Recover password is not allowed. Please contact administrator</h2>
+              <% } %>
             </div>
         </div>
     </article>

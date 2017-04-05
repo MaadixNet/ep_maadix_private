@@ -1,6 +1,6 @@
 <!doctype html>
 <html>
-        <title>Etherpad login</title>
+        <title>Etherpad register</title>
 
         <meta charset="utf-8"> 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
@@ -22,8 +22,9 @@
                     <% }) %>
                     </div>
                 <% } %>
-
-
+                <% if (!settings.register_enabled) { %>
+                <h2 class="title center">Registration is not allowed. Please contact administrator</h2>
+                <% } else { %>
                 <div id="formblock" class="login">
                   <h4 class="center">To activate an account please insert a valid email address.</h4>
                   <h4 class="center"> A confirmation email will be sent to you</h4>
@@ -34,6 +35,7 @@
                     <button type="submit" lang="en">Register</button>
                 </form>
                 </div>
+                <% } %>
             </div>
         </div>
     </article>

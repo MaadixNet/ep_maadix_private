@@ -570,16 +570,10 @@ exports.expressCreateServer = function (hook_name, args, cb) {
           userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                  res.redirect(req.session.baseurl + "/dashboard");
-            } else if (settings.register_enabled==0) {
-             
-                var render_args = {
-                    errors: ['registration is not allowed. Please contact administrator']
-                };
-                res.send(eejs.require("ep_maadix/templates/msgtemplate_not_logged.ejs", render_args));
-                return;
             } else {
                 var render_args = {
-                    errors: []
+                    errors: [],
+                    settings: settings
                 };
                 res.send(eejs.require("ep_maadix/templates/register.ejs", render_args));
             }
@@ -664,16 +658,10 @@ exports.expressCreateServer = function (hook_name, args, cb) {
           userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                  res.redirect(req.session.baseurl + "/dashboard");
-            } else if (settings.recover_pw ==0) {
-
-                var render_args = {
-                    errors: ['Recover password is not allowed. Please contact administrator']
-                };
-                res.send(eejs.require("ep_maadix/templates/msgtemplate_not_logged.ejs", render_args));
-                return;
             } else {
                 var render_args = {
-                    errors: []
+                    errors: [],
+                    settings: settings
                 };
                 res.send(eejs.require("ep_maadix/templates/recover.ejs", render_args));
             }
@@ -683,22 +671,17 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 
     args.app.get('/reset/:token', function (req, res) {
         var render_args = {};
+        var tok;
         getPadsSettings(function(settings) {
 
           userAuthenticated(req, function (authenticated) {
             if (authenticated) {
                  res.redirect(req.session.baseurl + "/dashboard");
-            } else if (settings.recover_pw ==0) {
-
-                var render_args = {
-                    errors: ['Recover password is not allowed. Please contact administrator']
-                };
-                res.send(eejs.require("ep_maadix/templates/msgtemplate_not_logged.ejs", render_args));
-                return;
             } else {
                 var render_args = {
                     errors: [],
-                    tok: req.params.token
+                    tok: req.params.token,
+                    settings: settings
                 };
                 res.send(eejs.require("ep_maadix/templates/reset.ejs", render_args));
             }
@@ -831,17 +814,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                         getGroup(req.params.groupid, function (found, currGroup) {
                             getUserGroup(req.params.groupid, req.session.userId, function (found, currUserGroup) {
                                 var render_args;
-                                if (!currUserGroup) {
-                                    render_args = {
-                                        errors: [],
-                                        msg: "This group does not exist! Perhaps someone has deleted the group.",
-                                    };
-                                    res.send(eejs
-                                        .require("ep_maadix/templates/msgtemplate.ejs",
-                                            render_args));
-                                    return;
-                                }
-                                var isown = currUserGroup[0].Role == 1;
                                 if (currGroup && currUser && currUserGroup) {
                                     render_args = {
                                         errors: [],
@@ -850,7 +822,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         userid: req.session.userId,
                                         username: req.session.username,
                                         baseurl: req.session.baseurl,
-                                        isowner: isown,
                                         role: currUserGroup[0].Role,
                                         pads: pads,
                                         settings: settings
@@ -859,17 +830,24 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                 } else {
                                     render_args = {
                                         errors: [],
-                                        msg: "This group does not exist! Perhabs anyone has deleted the group.",
+                                        id: false,
+                                        groupid: false,
+                                        userid: req.session.userId,
+                                        username: req.session.username,
+                                        baseurl: req.session.baseurl,
+                                        role: false,
+                                        pads: false,
+                                        settings: settings
+
 					
                                     };
-                                    res.send(eejs.require("ep_maadix/templates/msgtemplate.ejs",
-                                        render_args));
+                                    res.send(eejs.require("ep_maadix/templates/group.ejs", render_args));
                                 }
                             });
                         });
                     });
-
                 });
+
             } else {
                 res.redirect("../../login");
             }
@@ -887,17 +865,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                         getGroup(req.params.groupid, function (found, currGroup) {
                             getUserGroup(req.params.groupid, req.session.userId, function (found, currUserGroup) {
                                 var render_args;
-                                if (!currUserGroup) {
-                                    render_args = {
-                                        errors: [],
-                                        msg: "This group does not exist! Perhaps someone has deleted the group."
-                                    };
-                                    res.send(eejs
-                                        .require("ep_maadix/templates/msgtemplate.ejs",
-                                            render_args));
-                                    return;
-                                }
-                                var isown = currUserGroup[0].Role == 1;
                                 if (currGroup && currUser && currUserGroup) {
                                     render_args = {
                                         errors: [],
@@ -906,7 +873,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         userid: req.session.userId,
                                         username: req.session.username,
                                         baseurl: req.session.baseurl,
-                                        isowner: isown,
                                         role: currUserGroup[0].Role,
                                         users: users,
                                         settings: settings
@@ -915,10 +881,18 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                 } else {
                                     render_args = {
                                         errors: [],
-                                        msg: "This group does not exist! Perhaps anyone has deleted the group."
+                                        id: false,
+                                        groupid: false,
+                                        userid: req.session.userId,
+                                        username: req.session.username,
+                                        baseurl: req.session.baseurl,
+                                        role: false,
+                                        users: false,
+                                        settings: settings
+
 
                                     };
-                                    res.send(eejs.require("ep_maadix/templates/msgtemplate.ejs",
+                                    res.send(eejs.require("ep_maadix/templates/groupusers.ejs",
                                         render_args));
                                 }
                             });
@@ -1154,26 +1128,16 @@ exports.expressCreateServer = function (hook_name, args, cb) {
   args.app.get('/group/:groupID/pad/:padID', function (req, res) {
     getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
-            getGroup(req.params.groupID, function (found, currGroup) {
-                getUser(req.session.userId, function (found, currUser) {
+          if (authenticated) {
+              getGroup(req.params.groupID, function (found, currGroup) {
+                  getUser(req.session.userId, function (found, currUser) {
                     var padID = req.params.padID;
                     var slice = padID.indexOf("$");
                     padID = padID.slice(slice + 1, padID.length);
                     var padsql = "select * from GroupPads where PadName = ?";
                     existValueInDatabase(padsql, [padID], function (found) {
                         var render_args;
-                        if (!found) {
-                            render_args = {
-                                errors: [],
-                                msg: "This pad does not exist! Perhabs anyone has deleted the pad."
-                            };
-                            res.send(eejs
-                                .require("ep_maadix/templates/msgtemplate.ejs",
-                                    render_args));
-                        } else {
-                            if (currGroup && currGroup.length > 0) {
-                                if (authenticated) {
-                                    if (currUser) {
+                        if (found && currUser && currGroup && currGroup.length > 0) {
                                         render_args = {
                                             errors: [],
                                             padname: padID,
@@ -1188,38 +1152,47 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         res.send(eejs
                                             .require("ep_maadix/templates/pad.ejs",
                                                 render_args));
-                                    } else {
-                                        res.send("Error");
-				    }
-                                } else {
+                          } else if (!found && currUser && currGroup && currGroup.length > 0) {//group is ok but pad does not exist
                                     render_args = {
-                                        errors: [],
-                                        padname: req.params.padID,
-                                        userid: req.session.userId,
-                                        username: req.session.username,
-                                        baseurl: req.session.baseurl,
-                                        groupID: req.params.groupID,
-                                        groupName: currGroup[0].name,
-                                        settings: settings,
-                                        padurl: req.session.baseurl + "/p/" + req.params.padID
+                                            errors: [],
+                                            padname: false,
+                                            userid: req.session.userId,
+                                            username: req.session.username,
+                                            baseurl: req.session.baseurl,
+                                            groupID: req.params.groupID,
+                                            groupName: currGroup[0].name,
+                                            settings: settings,
+                                            padurl: false,
+
                                     };
                                     res.send(eejs
-                                        .require("ep_maadix/templates/pad_with_login.ejs",
+                                        .require("ep_maadix/templates/pad.ejs",
                                             render_args));
-                                }
-                            } else {
+                            } else { //Evrithing is bad
                                 render_args = {
-                                    errors: [],
-                                    msg: "This group does not exist! Perhaps anyone has deleted the group."
+                                            errors: [],
+                                            padname: false,
+                                            userid: req.session.userId,
+                                            username: req.session.username,
+                                            baseurl: req.session.baseurl,
+                                            groupID: false,
+                                            groupName: false,
+                                            settings: settings,
+                                            padurl: false
+
                                 };
                                 res.send(eejs
-                                    .require("ep_maadix/templates/msgtemplate.ejs",
+                                    .require("ep_maadix/templates/pad.ejs",
                                         render_args));
                             }
-                        }
                     });
                 });
             });
+        } else {
+          //not authenticated
+           res.redirect(req.session.baseurl + "/login")
+
+        }
         });
       });
 });

@@ -95,6 +95,10 @@ a.header-btn {padding: 7px;}
 
 .clear {clear:both;}
 .center {text-align:center;}
+
+.inputBlock h4 {margin: 16px 0;}
+
+h5.padpage { margin: 7px 0;}
 /********************COLS************/
 
 .col-md-6 {width:50%;float:left; min-width:320px;}
