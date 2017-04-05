@@ -26,7 +26,7 @@
                 <div class="header-block header-block-buttons">
                         <a class="btn btn-sm header-btn" href="dashboard">My Groups</a> |
                         <% if (settings.public_pads) { %>
-                          <a class="btn btn-sm header-btn" href="">Public Pads</a> |
+                          <a class="btn btn-sm header-btn" href="">Public Pad</a> |
                         <% } %>
                         <a class="btn btn-sm header-btn" href="help">Help</a>
                 </div>
@@ -60,30 +60,17 @@
                 <% if (settings.public_pads ==1) { %>
                   <div id="formblock">
                     <div class="inputBlock">
-                      <h4 lang="en">Create a Public Pad by specific or random name</h4>
+                      <h4 lang="en">Create/Open a Public Pad by specific or random name</h4>
                       <form class="white">
                         <input type="text" placeholder="Pad-Name" id="createPadName">
                         <button type="submit" lang="en" id="createPublicPadByName">Create</button>
                         <button type="submit" lang="en" id="createPublicPadRandomName" class="longButton">Create Public Pad with random name</button>
                       </form>
                     </div>
-                  <div class="inputBlock">
-                    <h4 lang="en">Open an existing Public Pad by Name</h4>
-                    <form class="white">
-                      <input type="text" placeholder="Pad-Name" id="openPadName">
-                      <button type="submit" lang="en" id="openPublicPad">Open</button>
-                      <input type="hidden" id="baseurl" value="">
-                    </form>
                   </div>
                 </div>
                 <% } else { %>
-                <h3 class="title center" >Only private pads are allowed.</h3>
-                <% } %>
-                <% if (!authenticated) { %>
-                  <h4 class="title center">Are you a registered user? <a class="button" href="login">Log in here</a></h4>
-                  <% if (settings.register_enabled ==1) { %>
-                    <h4 class="title center">Want to register a new user? <a class="button" href="register">Register here</a></h4>
-                  <% } %>
+                <h2 class="title center" >Only private pads are allowed.</h2>
                 <% } %>
                 
       </article>

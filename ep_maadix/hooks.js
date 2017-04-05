@@ -1199,11 +1199,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 
     args.app.get('/pads/:id', function (req, res) {
 
-        //var sql = "Select * from Settings where `key` = 'public_pad'";
-        //getAllSql(sql, function (settings) { 
-        //getSingleSetting('public_pads', function (settings) {
         getPadsSettings(function(settings) {
-          console.log(settings.public_pads);
           userAuthenticated(req, function (authenticated) {
             
             var render_args;
@@ -1214,25 +1210,22 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     username: req.session.username,
                     userid: req.session.userId,
                     padName: req.params.id,
-                    settings: settings
+                    settings: settings,
+                    logged: true,
                 };
                 res.send(eejs
-                    .require("ep_maadix/templates/public_pad_logged_in.ejs",
+                    .require("ep_maadix/templates/public_pad.ejs",
                         render_args));
-            } else if (settings.public_pads==0){
-                render_args = {
-                  errors: [],
-                  msg: "Pubblic pads are not allowed.",
-                };
-              res.send(eejs
-                .require("ep_maadix/templates/msgtemplate_not_logged.ejs",
-                render_args));
-                return;
 
             } else {
 
                 render_args = {
                     errors: [],
+                    username: false,
+                    userid: false,
+                    padName: req.params.id,
+                    settings: settings,
+                    logged: false,
                     padurl: "../p/" + req.params.id
                 };
                 res.send(eejs
@@ -1243,31 +1236,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
           });
         });
     });
-/*    args.app.get('/p/:id', function (req, res) {
 
-        getPadsSettings(function(settings) {
-          userAuthenticated(req, function (authenticated) {
 
-            var render_args;
-              if (settings.public_pads==0i && !authenticated){
-                render_args = {
-                  errors: [],
-                  msg: "Pubblic pads are not allowed.",
-                };
-              res.send(eejs
-                .require("ep_maadix/templates/msgtemplate_not_logged.ejs",
-                render_args));
-                return;
-
-            } 
-
-            }
-
-          });
-        });
-    });
-*/
-/*Users
 /*Users funtions*/
 
   args.app.get('/confirm/:token', function (req, res) {

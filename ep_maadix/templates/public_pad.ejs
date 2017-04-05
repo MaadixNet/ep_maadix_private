@@ -21,12 +21,35 @@
 	<body>
         <div id="wrapper">
 	<header>
+          <% if(!logged) { %>
 		<div class="header-block header-block-buttons">
                   <a href="../">New Pad</a>
 		</div>
 	        <div class="header-block header-block-nav">
 		</div>
+          <% } else { %>
 
+
+                <div class="header-block header-block-buttons">
+                        <a class="btn btn-sm header-btn" href="../dashboard">My Groups</a> |
+                        <% if (settings.public_pads) { %>
+                          <a class="btn btn-sm header-btn" href="../home">Public Pad</a> |
+                        <% } %>
+                        <a class="btn btn-sm header-btn" href="../help">Help</a>
+                </div>
+                <h5 class="title center" lang="en">Pad title: <%=padName%> </h5>
+                <div class="header-block header-block-nav">
+                  <ul id="profile">
+                    <li>
+                        <span class="name"><i class="demo-icon icon-user">&#xe800;</i>  <%= username %> <i class="demo-icon icon-down-dir-1">&#xe818;</i></span>
+                      <ul>
+                        <li><a class="btn btn-sm header-btn" href="../user/<%= userid %>">My Profile</a></li>
+                        <li><a class="dropdown-item" href="../logout">Logout</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+          <% } %>
 	</header>	
 	<div id="main" >
 		<div class="inside">
