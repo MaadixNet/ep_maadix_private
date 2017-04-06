@@ -383,11 +383,16 @@ function groups(hooks, context,cb){
 			row.find(".Name").html('<a class="groupName">' + groups[i].name + '</a>');
 			row.find(".Authors").html(groups[i].amAuthors);
 			row.find(".deleteButton").bind('click',function(e){
-				var row = $(e.target).closest("tr");
-	       		var id = row.find('.groupID').html();
+                          var row = $(e.target).closest("tr");
+                          var id = row.find('.groupID').html();
+                          var conf = confirm("Are you sure to delete this group?");
+                            if(conf == true){
 				socket.emit("delete-group", id, function(){
-					searchGroup('');
+                                    searchGroup('');
 				});
+                            } else {
+                                searchGroup('');
+                            }
 			});
 			row.find(".manageGroupBtn")[0].href = groupUrl;
 			resultList.append(row);
@@ -537,7 +542,7 @@ function users(hooks, context,cb){
 	       		var hard = false;
 				socket.emit("delete-user", id, false, function(deleted){
 					if(!deleted){
-						var conf = confirm("The User is owner of one ore more groups. Are you sure to delete this user?");
+						var conf = confirm("Are you sure to delete this user?");
 					    if(conf == true){
 					    	hard = true;
 					    	socket.emit("delete-user", id, hard, function(isOwner){

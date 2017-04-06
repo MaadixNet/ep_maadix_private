@@ -2466,7 +2466,7 @@ ALL together
         });
 
         socket.on("delete-user", function (userid, hard, cb) {
-            var isOwner = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.Role = 1";
+            var isOwner = "SELECT * from User where userID= ?";
             existValueInDatabase(isOwner, [userid], function (exist) {
                 if (exist && !hard) {
                     cb(false);
