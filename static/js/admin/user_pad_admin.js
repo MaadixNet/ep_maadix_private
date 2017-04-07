@@ -1,7 +1,6 @@
 /* Copyright 2014 Alexander Oberegger
  * Copyright 2017 Pablo Castellano
-* Copyright 2017 MaadiX
-*
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -384,11 +383,16 @@ function groups(hooks, context,cb){
 			row.find(".Name").html('<a class="groupName">' + groups[i].name + '</a>');
 			row.find(".Authors").html(groups[i].amAuthors);
 			row.find(".deleteButton").bind('click',function(e){
-				var row = $(e.target).closest("tr");
-	       		var id = row.find('.groupID').html();
+                          var row = $(e.target).closest("tr");
+                          var id = row.find('.groupID').html();
+                          var conf = confirm("Are you sure to delete this group?");
+                            if(conf == true){
 				socket.emit("delete-group", id, function(){
-					searchGroup('');
+                                    searchGroup('');
 				});
+                            } else {
+                                searchGroup('');
+                            }
 			});
 			row.find(".manageGroupBtn")[0].href = groupUrl;
 			resultList.append(row);
@@ -485,10 +489,12 @@ function users(hooks, context,cb){
     		var row = $(e.target).closest("th");
     		var re = /<a.+/;
     		var text = row.html().toString().replace(re, '');
-			if(text.toLowerCase() == 'id'){
-				showUsers(currentUsers, sortByIdAsc);
+                if(text.toLowerCase() == 'id'){
+                        showUsers(currentUsers, sortByIdAsc);
       		}else if(text.toLowerCase() == 'user name'){
       			showUsers(currentUsers, sortByNameAsc);
+                }else if(text.toLowerCase() == 'user email'){
+                        showUsers(currentUsers, sortByNameAsc);
       		}else if(text.toLowerCase() == '#groups'){
       			showUsers(currentUsers, sortByAmountGroupsAsc);
       		}
@@ -501,6 +507,8 @@ function users(hooks, context,cb){
 				showUsers(currentUsers, sortByIdDesc);
       		}else if(text.toLowerCase() == 'user name'){
       			showUsers(currentUsers, sortByNameDesc);
+                }else if(text.toLowerCase() == 'user email'){
+                        showUsers(currentUsers, sortByNameDesc);
       		}else if(text.toLowerCase() == '#groups'){
       			showUsers(currentUsers, sortByAmountGroupsDesc);
       		}
@@ -525,6 +533,8 @@ function users(hooks, context,cb){
 			var row = widget.find('.template tr').clone();
 			row.find(".ID").html('<a class="userID">' + users[i].id)+ '</a>';
 			row.find(".Name").html('<a href = "users/user?id='+ users[i].id+'" class="userName">' + users[i].name + '</a>');
+                          row.find(".Email").html('<a href = "users/user?id='+ users[i].id+'" class="userEmail">' + users[i].email + '</a>');
+
 			row.find(".Groups").html(users[i].amGroups);
 			row.find(".deleteButton").bind('click',function(e){
 				var row = $(e.target).closest("tr");
@@ -532,7 +542,7 @@ function users(hooks, context,cb){
 	       		var hard = false;
 				socket.emit("delete-user", id, false, function(deleted){
 					if(!deleted){
-						var conf = confirm("The User is owner of one ore more groups. Are you sure to delete this user?");
+						var conf = confirm("Are you sure to delete this user?");
 					    if(conf == true){
 					    	hard = true;
 					    	socket.emit("delete-user", id, hard, function(isOwner){
@@ -552,6 +562,8 @@ function users(hooks, context,cb){
 				var val = {};
 				val.id = id;
 				val.row = row;
+                        var conf = confirm("This action will reset the user password and send it by email in plain text. It's safer to allow users to recover their own password. Do you still want to reset te password for this user?");
+                        if(conf == true){
 	       		socket.emit("reset-pw-user", val, function(retval){
 	       			var row = $(".ID:contains('"+retval.id+"')");
 	       			if(retval.success){
@@ -560,6 +572,7 @@ function users(hooks, context,cb){
 	       				row.parent().find('.success').html('<img src= "../../static/plugins/ep_maadix/static/html/fail.jpg" width ="12" height = "12" alt="Fail">');
 	       			}
 	       		});
+                        }
 			});
 			if(users[i].active){
 				row.find(".setActiveBtn").val('Deactivate');
