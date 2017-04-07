@@ -12,10 +12,12 @@
 
 		<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
 		<script src="../static/plugins/ep_maadix/static/js/client/less.js" type="text/javascript"></script>
-		<script src="../static/plugins/ep_maadix/static/js/client/jquery.js" type="text/javascript"></script>
+		<!--<script src="../static/plugins/ep_maadix/static/js/client/jquery.js" type="text/javascript"></script>-->
+                <script src="//code.jquery.com/jquery-1.12.4.js" type="text/javascript"></script>
 		<script src="../static/plugins/ep_maadix/static/js/client/documentReadyRefresh.js" type="text/javascript"></script>
 		<script src="../static/plugins/ep_maadix/static/js/client/retina.js" type="text/javascript"></script>
 		<link href="../static/plugins/ep_maadix/static/css/custom.css" rel="stylesheet"> 
+                <link href="../static/plugins/ep_maadix/static/css/sortingtable.css" rel="stylesheet">
 	</head>
 	<body>
 	<header>
@@ -26,13 +28,15 @@
                         <% } %>
                         <a class="btn btn-sm header-btn" href="../help">Help</a>
                 </div>
-                <h2 class="title" lang="en">Pads in Group <%=id%> </h2>
+                <div class="header-block">
+                <h2 class="title center" lang="en">Pads in Group <%=id%> </h2>
+                </div>
                 <div class="header-block header-block-nav">
                   <ul id="profile">
                     <li>
                         <span class="name"><i class="demo-icon icon-user">&#xe800;</i>  <%= username %> <i class="demo-icon icon-down-dir-1">&#xe818;</i></span>
                       <ul>
-                        <li><a class="btn btn-sm header-btn" href="../user/<%= userid %>">My Profile</a></li>
+                        <li><a class="dropdown-item" href="../user/<%= userid %>">My Profile</a></li>
                         <li><a class="dropdown-item" href="../logout">Logout</a></li>
                       </ul>
                     </li>
@@ -44,16 +48,8 @@
                   <h2 class="title center">This group does not exist! Perhaps somebody has deleted the group.</h2>
                 <% } else { %>
                     <div id="wrapper" class="title-search-block">
-                        <div class="title-block">
-                                <div class="col-md-6">
-                                    <ul class="submenu">
-                                        <li><a class ="active">Pads List</a></li>
-                                        <li><a href="../groupusers/<%= groupid %>">Users list</a></li>
-                                    </ul>
-
-                                    <form class="search"><input type="text" data-groupid="<%=groupid%>" id="search" placeholder="Search Pad"></input></form>
-				</div>
-                            <div class="col-md-6">
+                        <div class="title-block padslist">
+                                <div class="col-md-9">
                                 <div class="inputBlock">
                                     <h4 lang="en">Add a Private Pad to this Group</h4>
                                     <form id="createPrivatePadForm">
@@ -61,25 +57,34 @@
                                             <button data-groupid="<%= groupid %>" type="submit" lang="en" id="createPrivateGroupPad">Create Pad</button>
                                     </form>
                                 </div><!--input block-->
+
+                                </div>
+
+                            <div class="col-md-3">
+                                    <ul class="submenu">
+                                        <li><a href="../groupusers/<%= groupid %>">Users list</a></li>
+                                    </ul>
+
                             </div> 
+
 			</div><!--title-block-->
                         <div class="clear"></div>
 			<%if (pads.length > 0) {%> 
-				<table id="padstable">
+				<table id="padstable" class="display" cellspacing="0" width="100%">
 				<thead>
-					<tr>
-						<th>Pad Title</th>
-						<th>Last edit</th>
-                                                <% if (role == 1) {%>
-						<th>Delete</th>
-                                                <% } %>
-					<tr>
+                                    <tr>
+                                        <th>Pad Title</th>
+                                        <th>Last edit</th>
+                                        <% if (role == 1) {%>
+                                        <th data-orderable="false">Delete</th>
+                                        <% } %>
+                                    </tr>
 				</thead>
 				<tbody>
 				<% for(var i = 1; i <= pads.length; i++){%>
 					<tr>
 						<td class="first"><a class="padClick" data-groupid="<%=groupid%>" data-name="<%=pads[i-1].name%>"><%= pads[i-1].name%></a></td>
-						<td class="editDate" sort-data="<%=pads[i-1].timestampedit%>" data-timestampedit="<%=pads[i-1].timestampedit%>"><%=pads[i-1].lastedit%></td>
+						<td class="editDate" data-order="<%=pads[i-1].timestampedit%>" data-timestampedit="<%=pads[i-1].timestampedit%>"><%=pads[i-1].lastedit%></td>
                                                 <% if (role == 1) {%>
 						<td title="Delete Pad" class="last">
 							<a data-padname="<%=pads[i-1].name%>" data-groupid = "<%= groupid %>" class="delete">
@@ -99,7 +104,8 @@
         <% } %>
 	</article>
         <script src="../static/plugins/ep_maadix/static/js/client/end.js" type="text/javascript"></script>
-        <script src="../static/plugins/ep_maadix/static/js/client/slimtable.js" type="text/javascript"></script>
+        <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js" type="text/javascript"></script>
+
 
 	 <script>
        		var getBaseURL = function(slice,cb){
@@ -119,7 +125,7 @@
        			console.log("<<<<<<<<<");
        			cb(url);
        		};
-		$("#padstable").slimtable({
+		/*$("#padstable").slimtable({
 			tableData: null,
 			dataUrl: null,
 			keepAttrs: ["data-timestampedit","data-groupid","data-name","data-padname"],
@@ -135,10 +141,13 @@
 
 			sortStartCB: null,
 			sortEndCB: null
-		});
+		});*/
 
     		$(document).ready(function(){  			
-
+                  $('#padstable').DataTable( {
+                    "sDom": 'Rfrtlip',
+                    "order": [[ 1, "desc" ]]
+                  } );
                         
     			$(".delete").click(function(){
     				$("#wrapper").append('<div id="overlay"></div>');

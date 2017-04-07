@@ -203,7 +203,7 @@ jQuery(document).ready(function(){
                                                 if($(this).next().hasClass("errorUp"))
                                                         $(this).next().remove();
                                                 //if($(this).is('#createPrivateGroup') && !$(this).next().hasClass("errorUp") && data.error == 'Group already exists');
-                                                        $(this).parent().append('<div class="errorUp"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
+                                                        $(this).parent().append('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
                                                         $("#createPrivateGroupForm .errorUp").delay(2000).fadeOut(1000);
                                         });
                                 }else{
@@ -211,7 +211,7 @@ jQuery(document).ready(function(){
                                     $("#groupName").val('');
                                     $("#wrapper").append('<div id="overlay"></div>');
                                     $("#wrapper").append('<div id="lightBox">'+
-                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en">Creando Grupo</h3></div></div></div>');
+                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en" calss="center">Creating Group</h3></div></div></div>');
 
                                     $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
 
@@ -243,14 +243,14 @@ jQuery(document).ready(function(){
                                                 if($(this).next().hasClass("errorUp"))
                                                         $(this).next().remove();
                                                 //if($(this).is('#createPrivateGroup') && !$(this).next().hasClass("errorUp") && data.error == 'Group already exists');
-                                                        $(this).parent().append('<div class="errorUp"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
+                                                        $(this).parent().append('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
                                                         $("#createPrivatePadForm .errorUp").delay(2000).fadeOut(1000);
                                         });
                                 }else{
                                     $("#groupName").val('');
                                     $("#wrapper").append('<div id="overlay"></div>');
                                     $("#wrapper").append('<div id="lightBox">'+
-                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en">Creando Pad</h3></div></div></div>');
+                                            '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en" class="center">Creating Pad</h3></div></div></div>');
 
                                     $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
 

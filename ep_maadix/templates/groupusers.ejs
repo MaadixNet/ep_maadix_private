@@ -28,13 +28,13 @@
                         <% } %>
                         <a class="btn btn-sm header-btn" href="../help">Help</a>
                 </div>
-                <h2 class="title" lang="en">Users in Group <%=id%> </h2>
+                <h2 class="title center" lang="en">Users in Group <%=id%> </h2>
                 <div class="header-block header-block-nav">
                   <ul id="profile">
                     <li>
                         <span class="name"><i class="demo-icon icon-user">&#xe800;</i>  <%= username %> <i class="demo-icon icon-down-dir-1">&#xe818;</i></span>
                       <ul>
-                        <li><a class="btn btn-sm header-btn" href="../user/<%= userid %>">My Profile</a></li>
+                        <li><a class="dropdown-item" href="../user/<%= userid %>">My Profile</a></li>
                         <li><a class="dropdown-item" href="../logout">Logout</a></li>
                       </ul>
                     </li>
@@ -44,37 +44,37 @@
                <article class="content items-list-page">
                  <% if (groupid) { %>
                     <div id="wrapper" class="title-search-block">
-                        <div class="title-block" >
+                        <div class="title-block userlist">
                             <div class="row">
-                                <div class="col-md-6 margin20">
+				<div class="col-md-9">
+                                  <%if (role < 3) {%>
+                                  <div class="inputBlock">
+                                    <h4 lang="en" class="margintrop0">Invite user to this group</h4>
+                                    <form id="InviteUserForm" class="margin20">
+                                      <input  type="mail"  placeholder="User email" id="email" autocomplete="off" required>
+                                        <div style="clear: both"></div>
+                                        <div class="margin20">
+                                        <p>Assign a role to new user for this Group</p>
+                                        <input type="radio" name="userRole" value="3" checked="checked"> User - Can create and edit Pads<br>
+                                        <input type="radio" name="userRole" value="2"> Editor - Can create/edit/delete Pads and invite/remove Users<br>
+                                        <%if (role == 1 ) {%>
+                                        
+                                        <input type="radio" name="userRole" value="1"> Admin - Can create/edit/delete Pads, invite/remove Users and delete this Group<br>
+                                        <% } %>
+                                        </div>
+                                        <button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Add User</button>
+                                    </form>
+
+                                  </div>
+                                  <% } %>
+
+				</div>
+                                <div class="col-md-3 margin20">
                                     <ul class="submenu">
                                         <li><a href="../group/<%= groupid %>">Pads List</a></li>
-                                        <li><a class="active">Users list</a></li>
                                     </ul>
-				</div>
-				<div class="col-md-6">
-                        <%if (role < 3) {%>
-                        <div class="inputBlock">
-                          <h4 lang="en" class="margintrop0">Invite user to this group</h4>
-                          <form id="InviteUserForm" class="margin20">
-                            <input  type="mail"  placeholder="User email" id="email" autocomplete="off" required>
-                              <div style="clear: both"></div>
-                              <div class="margin20">
-                              <p>Assign a role to new user for this Group</p>
-                              <input type="radio" name="userRole" value="3" checked="checked"> User - Can create and edit Pads<br>
-                              <input type="radio" name="userRole" value="2"> Editor - Can create/edit/delete Pads and invite/remove Users<br>
-                              <%if (role == 1 ) {%>
-                              
-                              <input type="radio" name="userRole" value="1"> Admin - Can create/edit/delete Pads, invite/remove Users and delete this Group<br>
-                              <% } %>
-                              </div>
-                              <button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Add User</button>
-                          </form>
+                                </div>
 
-                        </div>
-                        <% } %>
-
-				</div>
 			    </div>	
 			</div>
 			<%if (users.length > 0) {%> 
