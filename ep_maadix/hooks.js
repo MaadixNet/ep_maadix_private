@@ -1574,7 +1574,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         var getUserSql = "select * from User where User.email = ?";
         getAllSql(getUserSql, [userN], function (user) {
             if (user[0] != null && user[0] != undefined && user.length > 0) {
-                inviteRegistered(user[0].name, currUserName, location, user[0].userID, groupID,UserRole, res);
+                inviteRegistered(user[0].email, currUserName, location, user[0].userID, groupID,UserRole, res);
             } else {
                     getPassword(function (consString) {
                         /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
@@ -1604,30 +1604,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     function inviteRegistered(email, inviter, location, userID, groupID,UserRole, res) {
         var getGroupSql = "select * from Groups where Groups.groupID = ?";
         getAllSql(getGroupSql, [groupID], function (group) {
-/*            var msg = eMailAuth.invitationmsg;
-            msg = msg.replace(/<groupname>/, group[0].name);
-            msg = msg.replace(/<fromuser>/, inviter);
-            msg = msg.replace(/<url>/, location);
-            
-            var message = {
-                text: msg,
-                from: eMailAuth.invitationfrom,
-                to: email + " <" + email + ">",
-                subject: eMailAuth.invitationsubject
-            };
-            if (eMailAuth.smtp == "false") {
-                var nodemailer = require('nodemailer');
-                var transport = nodemailer.createTransport("sendmail");
-                transport.sendMail(message);
-            }
-            else {
-                emailserver.send(message, function (err) {
-                    if (err) {
-                        log('error', err);
-                    }
-                });
-            }
-*/
             var existGroupSql = "select * from UserGroup where userID = ? and groupID = ?";
             getOneValueSql(existGroupSql, [userID, groupID], function (found) {
                 if (found) {
@@ -2418,7 +2394,7 @@ ALL together
                     var message = {
                         text: msg,
                         from: "NO-REPLY <" + eMailAuth.resetfrom + ">",
-                        to: user.name + " <" + user.name + ">",
+                        to: user.email+ " <" + user.email+ ">",
                         subject: eMailAuth.resetsubject
                     };
                     var nodemailer = require('nodemailer');
