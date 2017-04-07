@@ -562,6 +562,8 @@ function users(hooks, context,cb){
 				var val = {};
 				val.id = id;
 				val.row = row;
+                        var conf = confirm("This action will reset the user password and send it by email in plain text. It's safer to allow users to recover their own password. Do you still want to reset te password for this user?");
+                        if(conf == true){
 	       		socket.emit("reset-pw-user", val, function(retval){
 	       			var row = $(".ID:contains('"+retval.id+"')");
 	       			if(retval.success){
@@ -570,6 +572,7 @@ function users(hooks, context,cb){
 	       				row.parent().find('.success').html('<img src= "../../static/plugins/ep_maadix/static/html/fail.jpg" width ="12" height = "12" alt="Fail">');
 	       			}
 	       		});
+                        }
 			});
 			if(users[i].active){
 				row.find(".setActiveBtn").val('Deactivate');
