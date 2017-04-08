@@ -7,6 +7,7 @@ This plugin adds the following features to etherpad-lite:
 - Group-Management System
 - Optionally allow register of new users
 - Optionally allow public pads
+- Opyionally allow users to recover their password
 - Administration interface
 
 Installation
@@ -16,14 +17,11 @@ In order to use this plugin you have to [configure Etherpad Lite to use MySQL as
 
 At the moment you still cannot install the plugin from the administrator interface so you have to clone it:
 
-    git clone https://github.com/MaadixNet/ep_maadix
-    cp ep_maadix/ep_maadix/email.json.template ep_maadix/ep_maadix/email.json
-    cd etherpad-lite
-    npm install ../ep_maadix/ep_maadix
+Fron the root folder of your etherpad installation run
 
-In the near future this command should replace the previous ones:
+    npm install https://github.com/MaadixNet/ep_maadix.git
 
-    npm install git+https://github.com/MaadixNet/ep_maadix.git
+Copy email.json.template to email.json and edit it using your email preferences
 
 Then use the provided [SQL script](/sql_listing.sql) to create the schema:
 
@@ -34,7 +32,7 @@ For now you still need  to add the following line in your Vhost config, in order
 
     RedirectMatch Permanent ^/login$ /etherpad/login  
 
-where /etherpad/ is the nemae of your subpath.  
+where /etherpad/ is the name of your subpath.  
 
 It should also work for an installation without Reverse Proxy, but it has not been tested.
 
