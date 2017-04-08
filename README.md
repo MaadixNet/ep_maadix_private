@@ -36,11 +36,14 @@ where /etherpad/ is the name of your subpath.
 
 It should also work for an installation without Reverse Proxy, but it has not been tested.
 
-Screenshots
+Usage
 -----------
 
-TODO
+Once installed the plugin login as admin into your etherpad installation e.g. https://youretherpadinstallation/admin  
+Click on 'Users and groups' tab on the left column.  
 
+From this area you can create groups, invite users and define settings for the installation.  
+Users will be able to manage groups, invitations and pads from the front end.   
 
 Credits
 -------
