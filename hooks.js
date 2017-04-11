@@ -521,10 +521,12 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     });
     args.app.post('/login', function (req, res) {
         new formidable.IncomingForm().parse(req, function (err, fields) {
+          getPadsSettings(function(settings) {
             var activated = '';
             if (req.query.act)activated = req.query.act;
             var render_args = {
                 errors: [],
+                settings: settings,
                 activated
             };
 
@@ -557,6 +559,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 }
             });
             return retVal;
+          });
         });
     });
 
@@ -1060,7 +1063,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     }
                     var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
                     getAllSql(isOwnerSql, [req.session.userId, fields.groupId], function (userGroup) {
-                        if (!(userGroup[0].Role == 1)) {
+                        if (!(userGroup[0].Role < 3 )) {
                             sendError('User is not owner! Can not delete Pad', res);
                         } else {
                             getEtherpadGroupFromNormalGroup(fields.groupId, function () {
