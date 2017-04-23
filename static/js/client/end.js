@@ -81,13 +81,13 @@ var userRole = function (numrole) {
   var textrole = '';
   switch (numrole) {
     case 1:
-      textrole = 'Admin';
+      textrole = 'Group Admin';
       break;
     case 2:
-      textrole = 'Editor';
+      textrole = 'Group Manager';
       break;
     case 3:
-      textrole = 'User';
+      textrole = 'Group Author';
       break;
     default:
       textrole = 'Undefined';

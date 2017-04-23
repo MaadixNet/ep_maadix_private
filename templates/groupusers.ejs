@@ -55,11 +55,11 @@
                                         <div style="clear: both"></div>
                                         <div class="margin20">
                                         <p>Assign a role to new user for this Group</p>
-                                        <input type="radio" name="userRole" value="3" checked="checked"> User - Can create and edit Pads<br>
-                                        <input type="radio" name="userRole" value="2"> Editor - Can create/edit/delete Pads and invite/remove Users<br>
+                                        <input type="radio" name="userRole" value="3" checked="checked"> Group Author - Can create and edit Pads<br>
+                                        <input type="radio" name="userRole" value="2"> Group Manager - Can create/edit/delete Pads and invite/remove Users<br>
                                         <%if (role == 1 ) {%>
                                         
-                                        <input type="radio" name="userRole" value="1"> Admin - Can create/edit/delete Pads, invite/remove Users and delete this Group<br>
+                                        <input type="radio" name="userRole" value="1"> Group Admin - Can create/edit/delete Pads, invite/remove Users and delete this Group<br>
                                         <% } %>
                                         </div>
                                         <button data-groupid="<%= groupid %>" type="submit" lang="en" id="InviteUserToGroupForm">Add User</button>
