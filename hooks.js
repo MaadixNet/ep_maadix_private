@@ -1194,7 +1194,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             });
         } else {
           //not authenticated
-           res.redirect(req.session.baseurl + "/login")
+           res.redirect("/login")
 
         }
         });
