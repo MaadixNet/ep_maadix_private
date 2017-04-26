@@ -10,6 +10,11 @@ This plugin adds the following features to etherpad-lite:
 - Opyionally allow users to recover their password
 - Administration interface
 
+Demo
+------------
+
+https://demo.maadix.net/etherpad/
+
 Installation
 ------------
 
