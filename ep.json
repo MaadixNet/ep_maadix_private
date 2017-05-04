@@ -2,6 +2,7 @@
   "parts": [
     {
       "name": "ep_maadix",
+      "post": ["ep_etherpad-lite/static"],
       "hooks": {
         "expressCreateServer": "ep_maadix/hooks",
         "eejsBlock_adminMenu" : "ep_maadix/hooks",
