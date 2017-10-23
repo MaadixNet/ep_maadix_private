@@ -138,6 +138,12 @@ var connection2 = mysql.createConnection(dbAuthParams);
 connection.connect(connectFkt);
 connection2.connect(connectFkt);
 
+//mysql keep alive every hour / the easy way
+//doc: https://stackoverflow.com/questions/20210522/nodejs-mysql-error-connection-lost-the-server-closed-the-connection
+setInterval(function () {
+    connection.query('SELECT 1');
+    connection2.query('SELECT 1');
+}, 3600000);
 
 function createSalt(cb) {
     var mylength = 10;
