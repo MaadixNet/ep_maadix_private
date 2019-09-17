@@ -531,5 +531,57 @@ jQuery(document).ready(function(){
       $(this).removeAttr('readonly');
     });
 
-
+    $(".deletePad").click(function(){
+            $("#wrapper").append('<div id="overlay"></div>');
+            $("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"><span'+
+            ' class="close"><i class="demo-icon icon-cancel-circled-outline">&#xe802;</i>'+
+                            '</span></div><div id="lightBoxMain"><div class="headline">'+
+                            '<h1 lang="en" class="red">Delete "'+ $(this).data('padname') + '"'+
+                            '</h1></div><div class="content"><button lang="en" class="marginRight" id="deletePadButton"'+
+                            'data-padname="'+$(this).data('padname')+'" data-groupid="'+$(this).data('groupid')+
+                            '">'+
+                            'Delete</button><button lang="en" id = "cancelDelete">Cancel</button></div></div></div>');
+            $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
+    
+            $(".close").click(function(){
+                    $("#overlay").remove();
+                    $("#lightBox").remove();
+            });
+            $("#cancelDelete").click(function(){
+                    console.log("clicked");
+                    $("#overlay").remove();
+                    $("#lightBox").remove();
+            });
+            
+     $("#deletePadButton").click(function(){
+            console.log('clicked delete here');
+            var data = {};
+                    getBaseURL(2,function(baseurl){
+                            var loc = document.location;
+                            url = baseurl;
+                    data.groupId = $("#deletePadButton").data('groupid');
+                            data.padName = $("#deletePadButton").data('padname');
+                            console.log(data);
+                    
+                            $.ajax({
+                                    type: 'POST',
+                                    data: JSON.stringify(data),
+                                    contentType: 'application/json',
+                                    url: url + 'deletePad', 
+                                    success: function(data) {
+                                                    if(data.success){
+                                                            window.location = loc;
+                                                    }else{
+                                                            console.log(data.error);
+                                                    }       
+                                    },
+                                    error: function (xhr, ajaxOptions, thrownError) {
+                                            console.log(thrownError);
+                                            console.log('WTH');
+                                    }
+                            });
+                    });
+        });
+    });
+    
 });
