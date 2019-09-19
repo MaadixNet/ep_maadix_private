@@ -76,6 +76,29 @@ function getSlice(cb){
                 slice = 1;
         cb(slice);
 }
+function randomPadNameCreate()
+{
+    // the number of distinct chars (64) is chosen to ensure that
+    // the selection will be uniform when using the PRNG below
+    var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+    // the length of the pad name is chosen to get 120-bit security:
+    // log2(64^20) = 120
+    var string_length = 20;
+    // make room for 8-bit integer values that span from 0 to 255.
+    var randomarray = new Uint8Array(string_length);
+    // use browser's PRNG to generate a "unique" sequence
+    var cryptoObj = window.crypto || window.msCrypto; // for IE 11
+    cryptoObj.getRandomValues(randomarray);
+    var randomstring = '';
+    for (var i = 0; i < string_length; i++)
+    {
+        // instead of writing "Math.floor(randomarray[i]/256*64)"
+        // we can save some cycles.
+        var rnum = Math.floor(randomarray[i]/4);
+        randomstring += chars.substring(rnum, rnum + 1);
+    }
+    return randomstring;
+}
 
 var userRole = function (numrole) {
   var textrole = '';
@@ -310,11 +333,16 @@ jQuery(document).ready(function(){
       } else {
         $("#createPublicPadByName").after('<div class="errorUp"><span class="arrowUp"></span><span lang="en">Please enter a name</span></div>');
         $(".errorUp").delay(2000).fadeOut(1000);
-         console.log(url);
       }
     });
 });
-
+    $('#createPublicPadRandomName').click(function(e){
+	e.preventDefault();
+	getBaseURL(1,function(baseurl){
+	    var padname = randomPadNameCreate();
+	    window.location = baseurl +  "pads/" + padname;
+	});
+    });
         $('#formEtherpadRegister').submit(function(e){
                 e.preventDefault();
 //              console.log('test');
