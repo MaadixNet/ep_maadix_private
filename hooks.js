@@ -320,7 +320,8 @@ function addUserToEtherpad(userName, cb) {
     });
 }
 */
-function AddUserToEtherpad(userName) {
+
+function addUserToEtherpad(userName) {
       let author = authorManager.createAuthorIfNotExistsFor(userName,null); 
       if (author===null)
          throw new customError("there was an error creating user", "ep_maadix");
@@ -1109,11 +1110,22 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     }
                     var userInGroupSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
                     getOneValueSql(userInGroupSql, [req.session.userId, fields.groupId], function (found) {
+                        console.log("FOUUUUUND");
                         if (found) {
                             getEtherpadGroupFromNormalGroup(fields.groupId, function (group) {
-                                addUserToEtherpad(req.session.userId, function (etherpad_author) {
-                                    sessionManager.createSession(group, etherpad_author.authorID, Date.now() +
-                                        7200000, function (err, session) {
+                                console.log("GROIP SI : " + req.session.userId);
+                                //let etherpad_author =  addUserToEtherpad(req.session.userId);
+                              (async () => {
+                                  let etherpad_author = await addUserToEtherpad(req.session.userId);
+                                      console.log(etherpad_author); // {"metadata": "for: test.png"}
+                                //console.log("ETHERPAD AUTHOR " + etherpad_author);
+                               // addUserToEtherpad(req.session.userId, function (etherpad_author) {
+                                if (etherpad_author){
+                                    //console.log("etherpad autoh is : " + etherpad_author.authorID);
+                                  (async () => {
+                                  let session = await sessionManager.createSession(group, etherpad_author.authorID, Date.now() + 7200000);
+                                        console.log ("sessio data " + session);
+                                    //sessionManager.createSession(group, etherpad_author.authorID, Date.now() +
                                         var data = {};
                                         data.success = true;
                                         data.session = session.sessionID;
@@ -1122,9 +1134,11 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         data.pad_name = fields.padname;
                                         data.location = fields.location;
                                         res.send(data);
-                                    });
-                                });
-                            });
+                                        console.log(data);
+                                   })();   
+                                }
+                              })();
+                          });
                         } else {
                             sendError('User not in Group', res);
                         }
@@ -1143,6 +1157,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
           if (authenticated) {
+            console.log("user authenitcated for pad");
               getGroup(req.params.groupID, function (found, currGroup) {
                   getUser(req.session.userId, function (found, currUser) {
                     var padID = req.params.padID;
@@ -1163,6 +1178,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                             settings: settings,
                                             padurl: req.session.baseurl + "/p/" + req.params.padID
                                         };
+                                        console.log ("render args " + render_args);
                                         res.send(eejs
                                             .require("ep_maadix/templates/pad.ejs",
                                                 render_args));
@@ -1925,7 +1941,9 @@ function getPadsOfGroup(id, padname, cb) {
               //    throw new customError("there was an error getting pad user", "ep_maadix");
               // TODO: de we need to check password fro groups pads?
               let isProtected = api.isPasswordProtected(padId);
+              console.log("is protected " + isProtected);
               let timestampedit = api.getLastEdited(padId);
+              console.log("is protected " + timestampedit);
               //pad.lastedit = converterPad(lastEdit);
               pad.isProtected = isProtected;
               pad.timestampedit = timestampedit;
@@ -1937,8 +1955,8 @@ function getPadsOfGroup(id, padname, cb) {
       }
   })
   queryPads.on('end', function () {
-      //cb(allPads);
-    return allPads;
+      cb(allPads);
+    //return allPads;
   });
 }
 function getUsersOfGroup(id,userID, cb) {
