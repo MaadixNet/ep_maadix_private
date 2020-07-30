@@ -20,10 +20,12 @@ var padManager = require('ep_etherpad-lite/node/db/PadManager');
 var db = require('ep_etherpad-lite/node/db/DB').db;
 var ERR = require("ep_etherpad-lite/node_modules/async-stacktrace");
 var groupManager = require('ep_etherpad-lite/node/db/GroupManager');
+var api = require('ep_etherpad-lite/node/db/API');
 var Changeset = require('ep_etherpad-lite/static/js/Changeset');
 var mysql = require('mysql');
 var email = require('emailjs');
 var settings = require('ep_etherpad-lite/node/utils/Settings');
+var customError = require("ep_etherpad-lite/node/utils/customError");
 var authorManager = require('ep_etherpad-lite/node/db/AuthorManager');
 var sessionManager = require('ep_etherpad-lite/node/db/SessionManager');
 var crypto = require('crypto');
@@ -304,9 +306,9 @@ function deletePadFromEtherpad(name, groupid, cb) {
         cb();
     });
 }
-
+/*
 function addUserToEtherpad(userName, cb) {
-    authorManager.createAuthorIfNotExistsFor(userName, null, function (err, author) {
+    authorManager.createAuthorIfNotExistsFor(userName,null, function (err, author) {
         if (err) {
             log('error', 'something went wrong while creating author');
             cb();
@@ -317,6 +319,13 @@ function addUserToEtherpad(userName, cb) {
         }
     });
 }
+*/
+function AddUserToEtherpad(userName) {
+      let author = authorManager.createAuthorIfNotExistsFor(userName,null); 
+      if (author===null)
+         throw new customError("there was an error creating user", "ep_maadix");
+      return author;
+}
 
 function mapAuthorWithDBKey(mapperkey, mapper, callback) {
     //try to map to an author
@@ -325,7 +334,7 @@ function mapAuthorWithDBKey(mapperkey, mapper, callback) {
 
         //there is no author with this mapper, so create one
         if (author == null) {
-            exports.createAuthor(null, function (err, author) {
+            authorManager.createAuthor(null, function (err, author) {
                 if (ERR(err, callback)) return;
 
                 //create the token2author relation
@@ -347,21 +356,21 @@ function mapAuthorWithDBKey(mapperkey, mapper, callback) {
 }
 
 function deleteUserFromEtherPad(userid, cb) {
-    mapAuthorWithDBKey("mapper2author", userid, function (err, author) {
-        db.remove("globalAuthor:" + author.authorID);
-        var mapper2authorSql = "DELETE FROM store where store.key = ?";
-        var mapper2authorQuery = connection2.query(mapper2authorSql, ["mapper2author:" + userid]);
-        mapper2authorQuery.on('error', mySqlErrorHandler);
-        mapper2authorQuery.on('end', function () {
-            var token2authorSql = "DELETE FROM store where store.value = ? and store.key like 'token2author:%'";
-            var token2authorQuery = connection2.query(token2authorSql, ['"' + author.authorID] + '"');
-            token2authorQuery.on('error', mySqlErrorHandler);
-            token2authorQuery.on('end', function () {
-                log('debug', "User deleted");
-                cb();
-            });
+   mapAuthorWithDBKey("mapper2author", userid, function (err, author) {
+      db.remove("globalAuthor:" + author.authorID);
+      var mapper2authorSql = "DELETE FROM store where store.key = ?";
+      var mapper2authorQuery = connection2.query(mapper2authorSql, ["mapper2author:" + userid]);
+      mapper2authorQuery.on('error', mySqlErrorHandler);
+      mapper2authorQuery.on('end', function () {
+        var token2authorSql = "DELETE FROM store where store.value = ? and store.key like 'token2author:%'";
+        var token2authorQuery = connection2.query(token2authorSql, ['"' + author.authorID] + '"');
+        token2authorQuery.on('error', mySqlErrorHandler);
+        token2authorQuery.on('end', function () {
+          log('debug', "User deleted");
+          cb();
         });
     });
+  });
 }
 
 var userAuthenticated = function (req, cb) {
@@ -402,7 +411,7 @@ var userAuthentication = function (username, password, cb) {
         }
     });
 };
-
+/*
 var emailserver = email.server.connect({
     user: eMailAuth.user,
     password: eMailAuth.password,
@@ -410,6 +419,7 @@ var emailserver = email.server.connect({
     port: eMailAuth.port,
     ssl: eMailAuth.ssl
 });
+*/
 function sendError(error, res) {
     var data = {};
     data.success = false;
@@ -458,44 +468,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         };
         res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_user.ejs", render_args));
     });
-
-
-
-/*
-    function notRegisteredUpdate(userid, groupid, userRole, email) {
-        var userGroupSql = "INSERT INTO UserGroup VALUES(?, ?, ?)";
-        updateSql(userGroupSql, [userid, groupid, userRole], function (success) {
-            if (success) {
-                var deleteNotRegisteredSql = "DELETE FROM NotRegisteredUsersGroups where groupID = ? and email = ?";
-                updateSql(deleteNotRegisteredSql, [groupid, email], function (success) {
-                });
-            }
-        });
-    }
-
-    function checkInvitations(email, userid, cb) {
-        var userNotRegisteredSql = "select * from NotRegisteredUsersGroups where email = ?";
-        var notRegistereds = [];
-        var queryInstances = connection2.query(userNotRegisteredSql, [email]);
-        queryInstances.on('error', mySqlErrorHandler);
-        queryInstances.on('result', function (foundInstance) {
-            connection2.pause();
-            notRegistereds.push(foundInstance);
-            connection2.resume();
-        });
-        queryInstances.on('end', function () {
-            if (notRegistereds.length < 1) {
-                cb();
-            }
-            for (var i = 0; i < notRegistereds.length; i++) {
-                notRegisteredUpdate(userid, notRegistereds[i].groupID, notRegistereds[i].Role, email);
-                if ((i + 1) == notRegistereds.length)
-                    cb();
-            }
-        });
-    }
-
-*/
 
     args.app.get('/logout', function (req, res) {
         req.session.userId = null;
@@ -614,14 +586,18 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                         /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
                             addUserSql = "INSERT INTO User VALUES(null,?, ?,null, 0 ,null ,?, ?, 0)";
                             var addUserQuery = connection.query(addUserSql, [userEmail,userEmail, consString, salt]);
+                            console.log("USER ADDED TO DDBB");
                             addUserQuery.on('error', mySqlErrorHandler);
                             addUserQuery.on('result', function (newUser) {
+                                console.log("New user is " + newUser.insertId);
                                 connection.pause();
-                                addUserToEtherpad(newUser.insertId, function () {
+                                //addUserToEtherpad(newUser.insertId, function (cb) {
+                                let mappedUser = AddUserToEtherpad(newUser.insertId);
+                                if (mappedUser) {
                                     connection.resume();
                                     var msg = eMailAuth.registrationtext;
                                     msg = msg.replace(/<url>/, fields.location + 'confirm/' +consString );
-
+                                    console.log("message is " + msg);
                                     var message = {
                                         text: msg,
                                         from: eMailAuth.invitationfrom,
@@ -630,25 +606,37 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     };
                                     if (eMailAuth.smtp == "false") {
                                       var nodemailer = require('nodemailer');
-                                      var transport = nodemailer.createTransport("sendmail");
-                                      transport.sendMail(message);
-                                  }  else {
+                                      //var transport = nodemailer.createTransport("sendmail");
+                                      //transport.sendMail(message);
+				      let transporter = nodemailer.createTransport({
+					      sendmail: true,
+                                              newline: 'unix',
+                                              path: '/usr/sbin/sendmail'
+                                      });
+                                      transporter.sendMail(message
+					  , (err, info) => { 
+						console.log(err);
+                                                console.log(info);
+                                      });
+                                      console.log("message sent????????????????");
+                                    }  else {
 
                                       emailserver.send(message, function (err) {
-                                    log('debub' , 'message sent');
-                                    if (err) {
+                                      log('debub' , 'message sent');
+                                      if (err) {
                                         log('error', err);
+                                      }
+                                      });
                                     }
-                                });
-                            }
-                                });
+                                  //console.log(cb); 
+                                }
                             });
                             addUserQuery.on('end', function () {
                                  var data = {};
                                   data.success = true;
                                 data.error = false;
                                 res.send(data); 
-                                cb(true);
+                                //cb(true);
                             });
                         });
                     });
@@ -730,9 +718,25 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                         subject: eMailAuth.pswdresetsubject
                                     };
                                     if (eMailAuth.smtp == "false") {
+                                      /*
                                       var nodemailer = require('nodemailer');
                                       var transport = nodemailer.createTransport("sendmail");
                                       transport.sendMail(message);
+                                      */
+				      var nodemailer = require('nodemailer');
+				      //var transport = nodemailer.createTransport("sendmail");
+				      //transport.sendMail(message);
+				      let transporter = nodemailer.createTransport({
+					  sendmail: true,
+					  newline: 'unix',
+					  path: '/usr/sbin/sendmail'
+				      });
+				      transporter.sendMail(message
+				      , (err, info) => { 
+				      console.log(err);
+				      console.log(info);
+				      });
+
                                   }  else {
 
                                       emailserver.send(message, function (err) {
@@ -1635,9 +1639,25 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 subject: eMailAuth.invitationsubject
             };
             if (eMailAuth.smtp == "false") {
+		/*
                 var nodemailer = require('nodemailer');
                 var transport = nodemailer.createTransport("sendmail");
                 transport.sendMail(message);
+		*/
+		var nodemailer = require('nodemailer');
+		//var transport = nodemailer.createTransport("sendmail");
+		//transport.sendMail(message);
+		let transporter = nodemailer.createTransport({
+		    sendmail: true,
+		    newline: 'unix',
+		    path: '/usr/sbin/sendmail'
+		});
+		transporter.sendMail(message
+		, (err, info) => { 
+		console.log(err);
+		console.log(info);
+		});
+
             }
             else {
                 emailserver.send(message, function (err) {
@@ -1673,901 +1693,902 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 subject: eMailAuth.invitationsubject
             };
             if (eMailAuth.smtp == "false") {
+		/*
                 var nodemailer = require('nodemailer');
                 var transport = nodemailer.createTransport("sendmail");
                 transport.sendMail(message);
-            }
-            else {
-                emailserver.send(message, function (err) {
-                    log('debub' , 'message sent');
-                    if (err) {
-                        log('error', err);
-                    }
-                });
-            }
-            var existGroupSql = "select * from UserGroup where userID = ? and groupID = ?";
-            getOneValueSql(existGroupSql, [userID,groupID ], function (found) {
-                if (found) {
-                    sendError('One ore more user are already Invited to this Group', res);
-                } else {
-                    var sqlInsert = "INSERT INTO UserGroup Values(?,?,?)";
-                    var insertQuery = connection.query(sqlInsert, [userID, groupID,UserRole]);
-                    insertQuery.on('error', mySqlErrorHandler);
-                    insertQuery.on('end', function () {
-                    });
+		*/
+		var nodemailer = require('nodemailer');
+		//var transport = nodemailer.createTransport("sendmail");
+		//transport.sendMail(message);
+		let transporter = nodemailer.createTransport({
+		    sendmail: true,
+		    newline: 'unix',
+		    path: '/usr/sbin/sendmail'
+		});
+		transporter.sendMail(message
+		, (err, info) => { 
+		console.log(err);
+		console.log(info);
+		});
 
-                }
-            });
-        });
-    }
+	  }
+	  else {
+	      emailserver.send(message, function (err) {
+		  log('debub' , 'message sent');
+		  if (err) {
+		      log('error', err);
+		  }
+	      });
+	  }
+	  var existGroupSql = "select * from UserGroup where userID = ? and groupID = ?";
+	  getOneValueSql(existGroupSql, [userID,groupID ], function (found) {
+	      if (found) {
+		  sendError('One ore more user are already Invited to this Group', res);
+	      } else {
+		  var sqlInsert = "INSERT INTO UserGroup Values(?,?,?)";
+		  var insertQuery = connection.query(sqlInsert, [userID, groupID,UserRole]);
+		  insertQuery.on('error', mySqlErrorHandler);
+		  insertQuery.on('end', function () {
+		  });
 
-    args.app.post('/deleteUserFromGroup', function (req, res) {
-        new formidable.IncomingForm().parse(req, function (err, fields) {
-            userAuthenticated(req, function (authenticated) {
-                if (authenticated) {
-                    if (!fields.userID || fields.userID == "" || !fields.groupID || fields.groupID == "") {
-                        sendError('No User ID or Group ID given', res);
-                    } else {
-                        var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
-                        getAllSql(isOwnerSql, [req.session.userId, fields.groupID], function (userGroup) {
-                            if (!(userGroup[0].Role < 3)) {
-                                sendError('You are not not allowed to remove users frfom this group!!', res);
-                                return false;
-                            } else {
-                                var deleteUserFromGroupSql = "Delete from UserGroup where userID = ? and groupID = ?";
-                                var data = {};
-                                updateSql(deleteUserFromGroupSql, [fields.userID, fields.groupID], function (success) {
-                                    data.success = success;
-                                    res.send(data);
-                                });
-                                return true;
-                            }
-                        });
-                    }
-                } else {
-                    res.send("You are not logged in!!");
-                }
-            });
-        });
+	      }
+	  });
+      });
+  }
+
+  args.app.post('/deleteUserFromGroup', function (req, res) {
+      new formidable.IncomingForm().parse(req, function (err, fields) {
+	  userAuthenticated(req, function (authenticated) {
+	      if (authenticated) {
+		  if (!fields.userID || fields.userID == "" || !fields.groupID || fields.groupID == "") {
+		      sendError('No User ID or Group ID given', res);
+		  } else {
+		      var isOwnerSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
+		      getAllSql(isOwnerSql, [req.session.userId, fields.groupID], function (userGroup) {
+			  if (!(userGroup[0].Role < 3)) {
+			      sendError('You are not not allowed to remove users frfom this group!!', res);
+			      return false;
+			  } else {
+			      var deleteUserFromGroupSql = "Delete from UserGroup where userID = ? and groupID = ?";
+			      var data = {};
+			      updateSql(deleteUserFromGroupSql, [fields.userID, fields.groupID], function (success) {
+				  data.success = success;
+				  res.send(data);
+			      });
+			      return true;
+			  }
+		      });
+		  }
+	      } else {
+		  res.send("You are not logged in!!");
+	      }
+	  });
+      });
 });
 
 /*END Users functions*/
-    args.app.get('/home', function (req, res) {
-      var authenticated = false;
-      var username = "";
-      var userid = "";
-      getPadsSettings(function(settings) {
+  args.app.get('/home', function (req, res) {
+    var authenticated = false;
+    var username = "";
+    var userid = "";
+    getPadsSettings(function(settings) {
+    userAuthenticated(req, function (authenticated) {
+      if (authenticated){
+	   username = req.session.username;
+	   userid = req.session.userId;
+      } 
+	  var render_args = {
+	      errors: [],
+	      settings: settings,
+	      authenticated: authenticated,
+	      username: username,
+	      userid: userid
+	      };
+	      res.send(eejs
+		  .require("ep_maadix/templates/index.ejs",
+		      render_args));
+      });
+    });
+  });
+
+  args.app.get('/dashboard', function (req, res) {
+     getPadsSettings(function(settings) {
       userAuthenticated(req, function (authenticated) {
-        if (authenticated){
-             username = req.session.username;
-             userid = req.session.userId;
-        } 
-            var render_args = {
-                errors: [],
-                settings: settings,
-                authenticated: authenticated,
-                username: username,
-                userid: userid
-                };
-                res.send(eejs
-                    .require("ep_maadix/templates/index.ejs",
-                        render_args));
-        });
+	  if (authenticated) {
+	       var sql = "Select Groups.*, UserGroup.Role from Groups inner join UserGroup on(UserGroup.groupID = Groups.groupID) where UserGroup.userID = ?";
+	       getAllSql(sql, [req.session.userId], function (groups) {
+	       var render_args = {
+		  username: req.session.username,
+		  userid: req.session.userId,
+		  baseurl: req.session.baseurl,
+		  groups: groups,
+		  settings: settings
+		  
+	      };
+	       res.send(eejs.require("ep_maadix/templates/dashboard.ejs", render_args));
+	  });
+	  } else {
+	      res.redirect("/login");
+	  }
       });
     });
+  });
 
-    args.app.get('/dashboard', function (req, res) {
-       getPadsSettings(function(settings) {
-        userAuthenticated(req, function (authenticated) {
-            if (authenticated) {
-		 var sql = "Select Groups.*, UserGroup.Role from Groups inner join UserGroup on(UserGroup.groupID = Groups.groupID) where UserGroup.userID = ?";
-		 getAllSql(sql, [req.session.userId], function (groups) {
-                 var render_args = {
-                    username: req.session.username,
-                    userid: req.session.userId,
-                    baseurl: req.session.baseurl,
-		    groups: groups,
-                    settings: settings
-		    
-                };
-                 res.send(eejs.require("ep_maadix/templates/dashboard.ejs", render_args));
-	    });
-            } else {
-                res.redirect("/login");
-            }
-        });
+  args.app.get('/help', function (req, res) {
+      userAuthenticated(req, function (authenticated) {
+	  getPadsSettings(function(settings) {
+	  if (authenticated) {
+	      var render_args = {
+		  username: req.session.username,
+		  userid: req.session.userId,
+		  baseurl: req.session.baseurl,
+		  settings: settings
+
+	      };
+	       res.send(eejs.require("ep_maadix/templates/help.ejs", render_args));
+	  } else {
+	      res.redirect("/login");
+	  }
       });
     });
-
-    args.app.get('/help', function (req, res) {
-        userAuthenticated(req, function (authenticated) {
-            getPadsSettings(function(settings) {
-            if (authenticated) {
-                var render_args = {
-                    username: req.session.username,
-                    userid: req.session.userId,
-                    baseurl: req.session.baseurl,
-                    settings: settings
-
-                };
-                 res.send(eejs.require("ep_maadix/templates/help.ejs", render_args));
-            } else {
-                res.redirect("/login");
-            }
-        });
-      });
-    });
+  });
 
 
 
-    return cb();
+  return cb();
 };
 
 exports.eejsBlock_adminMenu = function (hook_name, args, cb) {
-    var hasAdminUrlPrefix = (args.content.indexOf('<a href="admin/') != -1)
-        , hasOneDirDown = (args.content.indexOf('<a href="../') != -1)
-        , hasTwoDirDown = (args.content.indexOf('<a href="../../') != -1)
-        , urlPrefix = hasAdminUrlPrefix ? "admin/" : hasTwoDirDown ? "../../" : hasOneDirDown ? "../" : ""
-        ;
-    args.content = args.content + '<li><a href="' + urlPrefix + 'userpadadmin">Users and groups</a> </li>';
-    return cb();
+  var hasAdminUrlPrefix = (args.content.indexOf('<a href="admin/') != -1)
+      , hasOneDirDown = (args.content.indexOf('<a href="../') != -1)
+      , hasTwoDirDown = (args.content.indexOf('<a href="../../') != -1)
+      , urlPrefix = hasAdminUrlPrefix ? "admin/" : hasTwoDirDown ? "../../" : hasOneDirDown ? "../" : ""
+      ;
+  args.content = args.content + '<li><a href="' + urlPrefix + 'userpadadmin">Users and groups</a> </li>';
+  return cb();
 };
 
 exports.eejsBlock_indexWrapper = function (hook_name, args, cb) {
-    args.content = eejs
-        .require("ep_maadix/templates/index_redirect.ejs");
-    return cb();
+  args.content = eejs
+      .require("ep_maadix/templates/index_redirect.ejs");
+  return cb();
 };
 exports.eejsBlock_styles = function (hook_name, args, cb) {
-    args.content = args.content + eejs.require("ep_maadix/templates/styles.ejs", {}, module);
-    return cb();
+  args.content = args.content + eejs.require("ep_maadix/templates/styles.ejs", {}, module);
+  return cb();
 };
 
 
 function existValueInDatabase(sql, params, cb) {
-    connection.query(sql, params, function (err, found) {
-        if (err) {
-            log('error', 'existValueInDatabase error, sql: '+ sql);
-            cb(false);
-        } else if (!found || found.length == 0) {
-            cb(false);
-        } else {
-            cb(true);
-        }
-    });
+  connection.query(sql, params, function (err, found) {
+      if (err) {
+	  log('error', 'existValueInDatabase error, sql: '+ sql);
+	  cb(false);
+      } else if (!found || found.length == 0) {
+	  cb(false);
+      } else {
+	  cb(true);
+      }
+  });
 }
 
 function getOneValueSql(sql, params, cb) {
-    log('debug', 'getOneValueSql');
-    var qry = connection.query(sql, params, function (err, found) {
-        if (err) {
-            log('error', 'getOneValueSql error, sql: ' + sql);
-            cb(false);
-        } else if (!found || found.length == 0) {
-            cb(false, null);
-        } else {
-            cb(true, found);
-        }
-    });
-    qry.on('error', mySqlErrorHandler)
+  log('debug', 'getOneValueSql');
+  var qry = connection.query(sql, params, function (err, found) {
+      if (err) {
+	  log('error', 'getOneValueSql error, sql: ' + sql);
+	  cb(false);
+      } else if (!found || found.length == 0) {
+	  cb(false, null);
+      } else {
+	  cb(true, found);
+      }
+  });
+  qry.on('error', mySqlErrorHandler)
 }
 
 function getAllSql(sql, params, cb) {
-    log('debug', 'getAllSql');
-    var allInstances = [];
-    var queryInstances = connection.query(sql, params);
-    queryInstances.on('error', mySqlErrorHandler);
-    queryInstances.on('result', function (foundInstance) {
-        connection.pause();
-        allInstances.push(foundInstance);
-        connection.resume();
-    });
-    queryInstances.on('end', function () {
-        cb(allInstances);
-    });
+  log('debug', 'getAllSql');
+  var allInstances = [];
+  var queryInstances = connection.query(sql, params);
+  queryInstances.on('error', mySqlErrorHandler);
+  queryInstances.on('result', function (foundInstance) {
+      connection.pause();
+      allInstances.push(foundInstance);
+      connection.resume();
+  });
+  queryInstances.on('end', function () {
+      cb(allInstances);
+  });
 }
 
 function getPadsOfGroup(id, padname, cb) {
-    var allPads = [];
-    var allSql = "Select * from GroupPads where GroupPads.GroupID = ?";
-    var queryPads = connection.query(allSql, [id]);
-    queryPads.on('error', mySqlErrorHandler);
-    queryPads.on('result', function (foundPads) {
-        log('debug', 'getPadsOfGroup result');
-        connection.pause();
-        var pad = {};
-        pad.name = foundPads.PadName;
-        if (pad.name != "") {
-            getEtherpadGroupFromNormalGroup(id, function (group) {
-                log('debug', 'getEtherpadGroupFromNormalGroup cb');
-                padManager.getPad(group + "$" + pad.name, null, function (err, origPad) {
-                    if (err) log('error', err);
-                    pad.isProtected = origPad.isPasswordProtected();
-                    origPad.getLastEdit(function (err, lastEdit) {
-                        pad.lastedit = converterPad(lastEdit);
-			pad.timestampedit = lastEdit,
-                        allPads.push(pad);
-                        connection.resume();
-                    });
-                });
-            });
-        } else {
-            connection.resume();
-        }
-    });
-    queryPads.on('end', function () {
-        cb(allPads);
-    });
+  var allPads = [];
+  var allSql = "Select * from GroupPads where GroupPads.GroupID = ?";
+  var queryPads = connection.query(allSql, [id]);
+  queryPads.on('error', mySqlErrorHandler);
+  queryPads.on('result', function (foundPads) {
+      log('debug', 'getPadsOfGroup result');
+      connection.pause();
+      var pad = {};
+      pad.name = foundPads.PadName;
+      if (pad.name != "") {
+          console.log("pad name " + pad.name);
+	  getEtherpadGroupFromNormalGroup(id, function (group) {
+	      log('debug', 'getEtherpadGroupFromNormalGroup cb');
+	      //padManager.getPad(group + "$" + pad.name, null, function (err, origPad) {
+              //let origPad = padManager.getPad(group + "$" + pad.name);
+              var padId = group + "$" + pad.name;
+              console.log("pad name is " + group + "$" + pad.name);
+              //if (origPad===null)
+              //    throw new customError("there was an error getting pad user", "ep_maadix");
+              // TODO: de we need to check password fro groups pads?
+              let isProtected = api.isPasswordProtected(padId);
+              let timestampedit = api.getLastEdited(padId);
+              //pad.lastedit = converterPad(lastEdit);
+              pad.isProtected = isProtected;
+              pad.timestampedit = timestampedit;
+              allPads.push(pad);
+              connection.resume();
+	  });
+      } else {
+	  connection.resume();
+      }
+  })
+  queryPads.on('end', function () {
+      //cb(allPads);
+    return allPads;
+  });
 }
 function getUsersOfGroup(id,userID, cb) {
-    var allUsers= [];
-    var allSql = "select User.name, User.email, User.active, User.FullName, User.userID, UserGroup.Role from User left join UserGroup on(UserGroup.userID = User.userID) where ( UserGroup.groupID = ? AND UserGroup.userID NOT LIKE ?);";
-    var queryUsers = connection.query(allSql, [id, userID]);
-    queryUsers.on('error', mySqlErrorHandler);
-    queryUsers.on('result', function (foundUsers) {
-        log('debug', 'getUsersOfGroup result');
-        connection.pause();
-        var user = {};
-        user.name = foundUsers.name;
-        if (user.name != "") {
-            allUsers.push(foundUsers);
-            connection.resume();
-        } else {
-            connection.resume();
-        }
-    });
-    queryUsers.on('end', function () {
-        cb(allUsers);
-    });
+  var allUsers= [];
+  var allSql = "select User.name, User.email, User.active, User.FullName, User.userID, UserGroup.Role from User left join UserGroup on(UserGroup.userID = User.userID) where ( UserGroup.groupID = ? AND UserGroup.userID NOT LIKE ?);";
+  var queryUsers = connection.query(allSql, [id, userID]);
+  queryUsers.on('error', mySqlErrorHandler);
+  queryUsers.on('result', function (foundUsers) {
+      log('debug', 'getUsersOfGroup result');
+      connection.pause();
+      var user = {};
+      user.name = foundUsers.name;
+      if (user.name != "") {
+	  allUsers.push(foundUsers);
+	  connection.resume();
+      } else {
+	  connection.resume();
+      }
+  });
+  queryUsers.on('end', function () {
+      cb(allUsers);
+  });
 }
 
 
 
 function getUser(userId, cb) {
-    log('debug', 'getUser');
-    var sql = "Select * from User where userID = ?";
-    getOneValueSql(sql, [userId], cb);
+  log('debug', 'getUser');
+  var sql = "Select * from User where userID = ?";
+  getOneValueSql(sql, [userId], cb);
 }
 
 function getGroup(groupId, cb) {
-    log('debug', 'getGroup');
-    var sql = "Select * from Groups where groupID = ?";
-    getOneValueSql(sql, [groupId], cb);
+  log('debug', 'getGroup');
+  var sql = "Select * from Groups where groupID = ?";
+  getOneValueSql(sql, [groupId], cb);
 }
 
 function getUserGroup(groupId, userId, cb) {
-    log('debug', 'getUserGroup');
-    var sql = "Select * from UserGroup where groupID = ? and userID = ?";
-    getOneValueSql(sql, [groupId, userId], cb);
+  log('debug', 'getUserGroup');
+  var sql = "Select * from UserGroup where groupID = ? and userID = ?";
+  getOneValueSql(sql, [groupId, userId], cb);
 }
 var converterPad = function (UNIX_timestamp) {
-    var a = new Date(UNIX_timestamp);
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    var year = a.getFullYear();
-    var month = months[a.getMonth()];
-    var date = a.getDate();
-    var hour = (( a.getHours() < 10) ? "0" : "") + a.getHours();
-    var min = ((a.getMinutes() < 10) ? "0" : "") + a.getMinutes();
-    return date + '. ' + month + ' ' + year + ' ' + hour + ':' + min ;
+  var a = new Date(UNIX_timestamp);
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = (( a.getHours() < 10) ? "0" : "") + a.getHours();
+  var min = ((a.getMinutes() < 10) ? "0" : "") + a.getMinutes();
+  return date + '. ' + month + ' ' + year + ' ' + hour + ':' + min ;
 };
 
 exports.socketio = function (hook_name, args, cb) {
-    var io = args.io.of("/pluginfw/admin/user_pad");
-    io.on('connection', function (socket) {
-        if (!socket.request.session.user || !socket.request.session.user.is_admin) return;
+  var io = args.io.of("/pluginfw/admin/user_pad");
+  io.on('connection', function (socket) {
+      if (!socket.request.session.user || !socket.request.session.user.is_admin) return;
+      socket.on("set-setting", function (key, value, cb) {
+	  setSetting(key, value, function (retval) {
 
-/*
-        socket.on("set-setting", function (key, value, cb) {
-            setSetting(key, value, function (retval) {
-                cb(retval);
-            });
-        });
-*/
-/* TODO: Update settings.json if public pads are disllowed
-*  'requireSession' must be set it to true 
-* Thos  isthe function that saves te file in /ep_etherpad-lite/node/hooks/express/adminsettings.js
-* Must do a string replace
-* from 
-* "requireSession" : false,
-* to
-* "requireSession" : true,
-* Nedd to load fs
-* var fs = require('fs');
-*/
-/*
-    socket.on("saveSettings", function (settings) {
-      fs.writeFile('settings.json', settings, function (err) {
-        if (err) throw err;
-        socket.emit("saveprogress", "saved");
-      }); 
-    }); 
-**  Could belike that
-fs.readFile('settings.json', 'utf8', function(err, data) {
-    if (err) {
-      return console.log(err);
-    }
-     
-    var result = data.replace('\"requireSession\" \: false\,','\"requireSession\" \: true\,');
-    fs.writeFile(filePath, result, 'utf8', function(err) {
-        if (err) {
-           return console.log(err);
-        };
-    });
-});
-ALL together
-*/
-        socket.on("set-setting", function (key, value, cb) {
-            setSetting(key, value, function (retval) {
-
-                console.log('key '  + key);
-                console.log('value ' + value);
-              if (key=='public_pads' ){
-                  var sessionreq = 'false'; 
-                 fs.readFile('settings.json', 'utf8', function(err, data) {
-                    if(IsJsonString(data)){
-                          console.log('data  json is ok');
-                    } else {
-                          console.log('data  json is BAAAAAAAAd');
-                    }
-                    if (err) {
-                      return console.log(err);
-                    }
-                    if (value == 0){
-                      sessionreq = 'true';
-                    }                    
-                    console.log('seesrequiered' + sessionreq);
-                    var result = data.replace(/\"requireSession.+?(?=\,)/g,'\"requireSession\" \: ' + sessionreq);
-                    //console.log('result: ' + result);
-                    if(IsJsonString(result)){
-                          console.log('resul  json is ok')
-                      fs.writeFile('settings.json', result, 'utf8', function(err) {
-                        if (err) {
-                           return console.log(err);
-                        };
-                      });
-                    } else {
-                        console.log('malformed json'); 
-                    }
-                });               
-              }
-             cb(retval);
-            });
-        });
+	      console.log('key '  + key);
+	      console.log('value ' + value);
+	    if (key=='public_pads' ){
+		var sessionreq = 'false'; 
+	       fs.readFile('settings.json', 'utf8', function(err, data) {
+		  if(IsJsonString(data)){
+			console.log('data  json is ok');
+		  } else {
+			console.log('data  json is BAAAAAAAAd');
+		  }
+		  if (err) {
+		    return console.log(err);
+		  }
+		  if (value == 0){
+		    sessionreq = 'true';
+		  }                    
+		  console.log('seesrequiered' + sessionreq);
+		  var result = data.replace(/\"requireSession.+?(?=\,)/g,'\"requireSession\" \: ' + sessionreq);
+		  //console.log('result: ' + result);
+		  if(IsJsonString(result)){
+			console.log('resul  json is ok')
+		    fs.writeFile('settings.json', result, 'utf8', function(err) {
+		      if (err) {
+			 return console.log(err);
+		      };
+		    });
+		  } else {
+		      console.log('malformed json'); 
+		  }
+	      });               
+	    }
+	   cb(retval);
+	  });
+      });
 
 
 
 
-        socket.on("get-settings", function (cb) {
-            getPadsSettings(function (settings) {
-                cb(settings);
-            });
-        });
+      socket.on("get-settings", function (cb) {
+	  getPadsSettings(function (settings) {
+	      cb(settings);
+	  });
+      });
 
-        socket.on("get-etherpad-group-name", function (groupid, cb) {
-            getEtherpadGroupFromNormalGroup(groupid, function (group) {
-                cb(group);
-            });
-        });
+      socket.on("get-etherpad-group-name", function (groupid, cb) {
+	  getEtherpadGroupFromNormalGroup(groupid, function (group) {
+	      cb(group);
+	  });
+      });
 
-        socket.on("get-user-name", function (userId, cb) {
-		var userName;
-		var userNameSql = "Select name from User where User.userID = ? LIMIT 1";
-		var queryUserName = connection.query(userNameSql, [userId]);
-		queryUserName.on('error', mySqlErrorHandler);
-            queryUserName.on('result', function (result) {
-                userName = result.name;
-            });
-            queryUserName.on('end', function () {
-                cb(userName);
-            });
-        });
+      socket.on("get-user-name", function (userId, cb) {
+	      var userName;
+	      var userNameSql = "Select name from User where User.userID = ? LIMIT 1";
+	      var queryUserName = connection.query(userNameSql, [userId]);
+	      queryUserName.on('error', mySqlErrorHandler);
+	  queryUserName.on('result', function (result) {
+	      userName = result.name;
+	  });
+	  queryUserName.on('end', function () {
+	      cb(userName);
+	  });
+      });
 
-        socket.on("get-group-name", function (groupId, cb) {
-		var groupName;
-		var groupNameSql = "Select name from Groups where Groups.groupID = ? LIMIT 1";
-		var queryGroups = connection.query(groupNameSql, [groupId]);
-		queryGroups.on('error', mySqlErrorHandler);
-            queryGroups.on('result', function (result) {
-                groupName = result.name;
-            });
-            queryGroups.on('end', function () {
-                cb(groupName);
-            });
-        });
+      socket.on("get-group-name", function (groupId, cb) {
+	      var groupName;
+	      var groupNameSql = "Select name from Groups where Groups.groupID = ? LIMIT 1";
+	      var queryGroups = connection.query(groupNameSql, [groupId]);
+	      queryGroups.on('error', mySqlErrorHandler);
+	  queryGroups.on('result', function (result) {
+	      groupName = result.name;
+	  });
+	  queryGroups.on('end', function () {
+	      cb(groupName);
+	  });
+      });
 
-        socket.on("search-group", function (searchTerm, cb) {
-            var allGroups = [];
-            var allSql = "Select * from Groups where Groups.name like ?";
-            var queryGroups = connection.query(allSql, ["%" + searchTerm + "%"]);
-            queryGroups.on('error', mySqlErrorHandler);
-            queryGroups.on('result', function (foundGroup) {
-                connection.pause();
-                group = {};
-                group.id = foundGroup.groupID;
-                group.name = foundGroup.name;
-                var sqlAmAuthors = 'Select count(userID) as amount from UserGroup Where groupID = ?';
-                var queryAuthors = connection2.query(sqlAmAuthors, [group.id]);
-                queryAuthors.on('error', mySqlErrorHandler);
-                queryAuthors.on('result', function (authors) {
-                    group.amAuthors = authors.amount;
-                    allGroups.push(group);
-                    connection.resume();
-                });
-            });
-            queryGroups.on('end', function () {
-                cb(allGroups);
-            });
+      socket.on("search-group", function (searchTerm, cb) {
+	  var allGroups = [];
+	  var allSql = "Select * from Groups where Groups.name like ?";
+	  var queryGroups = connection.query(allSql, ["%" + searchTerm + "%"]);
+	  queryGroups.on('error', mySqlErrorHandler);
+	  queryGroups.on('result', function (foundGroup) {
+	      connection.pause();
+	      group = {};
+	      group.id = foundGroup.groupID;
+	      group.name = foundGroup.name;
+	      var sqlAmAuthors = 'Select count(userID) as amount from UserGroup Where groupID = ?';
+	      var queryAuthors = connection2.query(sqlAmAuthors, [group.id]);
+	      queryAuthors.on('error', mySqlErrorHandler);
+	      queryAuthors.on('result', function (authors) {
+		  group.amAuthors = authors.amount;
+		  allGroups.push(group);
+		  connection.resume();
+	      });
+	  });
+	  queryGroups.on('end', function () {
+	      cb(allGroups);
+	  });
 
-        });
+      });
 
-        socket.on("search-pads", function (searchTerm, cb) {
-            var allPads = [];
-            var allSql = "Select * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName like ?";
-            var queryPads = connection.query(allSql, [searchTerm.id, "%" + searchTerm.term + "%"]);
-            queryPads.on('error', mySqlErrorHandler);
-            queryPads.on('result', function (foundPads) {
-                var pad = {};
-                pad.name = foundPads.PadName;
-                allPads.push(pad);
-            });
-            queryPads.on('end', function () {
-                cb(allPads);
-            });
-        });
+      socket.on("search-pads", function (searchTerm, cb) {
+	  var allPads = [];
+	  var allSql = "Select * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName like ?";
+	  var queryPads = connection.query(allSql, [searchTerm.id, "%" + searchTerm.term + "%"]);
+	  queryPads.on('error', mySqlErrorHandler);
+	  queryPads.on('result', function (foundPads) {
+	      var pad = {};
+	      pad.name = foundPads.PadName;
+	      allPads.push(pad);
+	  });
+	  queryPads.on('end', function () {
+	      cb(allPads);
+	  });
+      });
 
-        socket.on("search-all-users-not-in-group", function (vals, cb) {
-            var allUser = [];
-            var allSql = "select distinct User.name, User.userID from User left join UserGroup on(UserGroup.userID = User.userID) where User.userId NOT IN " +
-                "(Select distinct UserGroup.userID from UserGroup where UserGroup.groupID = ?) and User.name like ?";
-            var queryUser = connection.query(allSql, [vals.groupid, "%" + vals.name + "%"]);
-            queryUser.on('error', mySqlErrorHandler);
-            queryUser.on('result', function (user) {
-                var use = {};
-                use.name = user.name;
-                use.id = user.userID;
-                allUser.push(user);
-            });
-            queryUser.on('end', function () {
-                cb(allUser);
-            });
-        });
+      socket.on("search-all-users-not-in-group", function (vals, cb) {
+	  var allUser = [];
+	  var allSql = "select distinct User.name, User.userID from User left join UserGroup on(UserGroup.userID = User.userID) where User.userId NOT IN " +
+	      "(Select distinct UserGroup.userID from UserGroup where UserGroup.groupID = ?) and User.name like ?";
+	  var queryUser = connection.query(allSql, [vals.groupid, "%" + vals.name + "%"]);
+	  queryUser.on('error', mySqlErrorHandler);
+	  queryUser.on('result', function (user) {
+	      var use = {};
+	      use.name = user.name;
+	      use.id = user.userID;
+	      allUser.push(user);
+	  });
+	  queryUser.on('end', function () {
+	      cb(allUser);
+	  });
+      });
 
 
-        socket.on("search-group-user", function (searchTerm, cb) {
-            var allUser = [];
-            var allSql = "Select * from UserGroup where UserGroup.groupID = ?";
-            var queryUser = connection.query(allSql, [searchTerm.id]);
-            queryUser.on('error', mySqlErrorHandler);
-            queryUser.on('result', function (foundUser) {
-                connection.pause();
-                var userNameSql = "Select * from User where User.userID = ? and User.name like ?";
-                var User = {};
-                var queryUserName = connection2.query(userNameSql, [foundUser.userID, "%" + searchTerm.term + "%"]);
-                queryUserName.on('error', mySqlErrorHandler);
-                queryUserName.on('result', function (foundUserName) {
-                    User.id = foundUser.userID;
-                    User.name = foundUserName.name;
-                    User.active = foundUserName.active;
-                });
-                queryUserName.on('end', function () {
-                    allUser.push(User);
-                    connection.resume();
-                });
-            });
-            queryUser.on('end', function () {
-                cb(allUser);
-            });
-        });
+      socket.on("search-group-user", function (searchTerm, cb) {
+	  var allUser = [];
+	  var allSql = "Select * from UserGroup where UserGroup.groupID = ?";
+	  var queryUser = connection.query(allSql, [searchTerm.id]);
+	  queryUser.on('error', mySqlErrorHandler);
+	  queryUser.on('result', function (foundUser) {
+	      connection.pause();
+	      var userNameSql = "Select * from User where User.userID = ? and User.name like ?";
+	      var User = {};
+	      var queryUserName = connection2.query(userNameSql, [foundUser.userID, "%" + searchTerm.term + "%"]);
+	      queryUserName.on('error', mySqlErrorHandler);
+	      queryUserName.on('result', function (foundUserName) {
+		  User.id = foundUser.userID;
+		  User.name = foundUserName.name;
+		  User.active = foundUserName.active;
+	      });
+	      queryUserName.on('end', function () {
+		  allUser.push(User);
+		  connection.resume();
+	      });
+	  });
+	  queryUser.on('end', function () {
+	      cb(allUser);
+	  });
+      });
 
-        socket.on("delete-group", function (id, cb) {
-            var deleteGroupSql = "DELETE FROM Groups WHERE Groups.groupID = ?";
-            var deleteGroupQuery = connection.query(deleteGroupSql, [id]);
-            deleteGroupQuery.on('error', mySqlErrorHandler);
-            deleteGroupQuery.on('result', function () {
-                connection.pause();
-                var deleteUserGroupSql = "DELETE FROM UserGroup where UserGroup.groupID = ?";
-                var deleteUserGroupQuery = connection2.query(deleteUserGroupSql, [id]);
-                deleteUserGroupQuery.on('error', mySqlErrorHandler);
-                deleteUserGroupQuery.on('end', function () {
-                    var deleteGroupPadsSql = "DELETE FROM GroupPads where GroupPads.groupID = ?";
-                    var deleteGroupPadsQuery = connection2.query(deleteGroupPadsSql, [id]);
-                    deleteGroupPadsQuery.on('error', mySqlErrorHandler);
-                    deleteGroupPadsQuery.on('end', function () {
-                        deleteGroupFromEtherpad(id, function () {
-                            connection.resume();
-                        });
+      socket.on("delete-group", function (id, cb) {
+	  var deleteGroupSql = "DELETE FROM Groups WHERE Groups.groupID = ?";
+	  var deleteGroupQuery = connection.query(deleteGroupSql, [id]);
+	  deleteGroupQuery.on('error', mySqlErrorHandler);
+	  deleteGroupQuery.on('result', function () {
+	      connection.pause();
+	      var deleteUserGroupSql = "DELETE FROM UserGroup where UserGroup.groupID = ?";
+	      var deleteUserGroupQuery = connection2.query(deleteUserGroupSql, [id]);
+	      deleteUserGroupQuery.on('error', mySqlErrorHandler);
+	      deleteUserGroupQuery.on('end', function () {
+		  var deleteGroupPadsSql = "DELETE FROM GroupPads where GroupPads.groupID = ?";
+		  var deleteGroupPadsQuery = connection2.query(deleteGroupPadsSql, [id]);
+		  deleteGroupPadsQuery.on('error', mySqlErrorHandler);
+		  deleteGroupPadsQuery.on('end', function () {
+		      deleteGroupFromEtherpad(id, function () {
+			  connection.resume();
+		      });
 
-                    });
-                });
-            });
-            deleteGroupQuery.on('end', function () {
-                cb();
-            });
-        });
+		  });
+	      });
+	  });
+	  deleteGroupQuery.on('end', function () {
+	      cb();
+	  });
+      });
 
-        socket.on("delete-pad", function (name, groupid, cb) {
-            var deletePadSql = "DELETE FROM GroupPads WHERE GroupPads.PadName = ? and GroupPads.GroupID = ?";
-            var deletePadQuery = connection.query(deletePadSql, [name, groupid]);
-            deletePadQuery.on('error', mySqlErrorHandler);
-            deletePadQuery.on('result', function (pad) {});
-            deletePadQuery.on('end', function () {
-                deletePadFromEtherpad(name, groupid, function () {
-                    cb();
-                });
+      socket.on("delete-pad", function (name, groupid, cb) {
+	  var deletePadSql = "DELETE FROM GroupPads WHERE GroupPads.PadName = ? and GroupPads.GroupID = ?";
+	  var deletePadQuery = connection.query(deletePadSql, [name, groupid]);
+	  deletePadQuery.on('error', mySqlErrorHandler);
+	  deletePadQuery.on('result', function (pad) {});
+	  deletePadQuery.on('end', function () {
+	      deletePadFromEtherpad(name, groupid, function () {
+		  cb();
+	      });
 
-            });
-        });
+	  });
+      });
 
-        socket.on("suspend-user-from-group", function (usergroup, cb) {
-            var deleteUserSql = "DELETE FROM UserGroup where UserGroup.userID = ? and UserGroup.groupID = ?";
-            var deleteUserQuery = connection.query(deleteUserSql, [usergroup.userid, usergroup.groupid]);
-            deleteUserQuery.on('error', mySqlErrorHandler);
-            deleteUserQuery.on('end', function () {
-                cb();
-            });
-        });
+      socket.on("suspend-user-from-group", function (usergroup, cb) {
+	  var deleteUserSql = "DELETE FROM UserGroup where UserGroup.userID = ? and UserGroup.groupID = ?";
+	  var deleteUserQuery = connection.query(deleteUserSql, [usergroup.userid, usergroup.groupid]);
+	  deleteUserQuery.on('error', mySqlErrorHandler);
+	  deleteUserQuery.on('end', function () {
+	      cb();
+	  });
+      });
 
-        socket.on("add-group", function (name, cb) {
-            var existGroupSql = "SELECT * from Groups WHERE Groups.name = ?";
-            existValueInDatabase(existGroupSql, [name], function (bool) {
-                if (bool) {
-                    cb(false);
-                } else {
-                    var addGroupSql = "INSERT INTO Groups VALUES(null, ?)";
-                    var addGroupQuery = connection.query(addGroupSql, [name]);
-                    addGroupQuery.on('error', mySqlErrorHandler);
-                    addGroupQuery.on('result', function (group) {
-                        connection.pause();
-                        groupManager.createGroupIfNotExistsFor(group.insertId.toString(), function (err) {
-                            if (err) {
-                                log('error', err);
-                            }
-                            connection.resume();
-                        });
-                    });
-                    addGroupQuery.on('end', function () {
-                        cb(true);
-                    });
-                }
-            });
+      socket.on("add-group", function (name, cb) {
+	  var existGroupSql = "SELECT * from Groups WHERE Groups.name = ?";
+	  existValueInDatabase(existGroupSql, [name], function (bool) {
+	      if (bool) {
+		  cb(false);
+	      } else {
+		  var addGroupSql = "INSERT INTO Groups VALUES(null, ?)";
+		  var addGroupQuery = connection.query(addGroupSql, [name]);
+		  addGroupQuery.on('error', mySqlErrorHandler);
+		  addGroupQuery.on('result', function (group) {
+		      connection.pause();
+		      groupManager.createGroupIfNotExistsFor(group.insertId.toString(), function (err) {
+			  if (err) {
+			      log('error', err);
+			  }
+			  connection.resume();
+		      });
+		  });
+		  addGroupQuery.on('end', function () {
+		      cb(true);
+		  });
+	      }
+	  });
 
-        });
+      });
 
-        socket.on("add-pad-to-group", function (padGroup, cb) {
-            if (padGroup.groupid == "" || padGroup.padName == "")
-                cb(false);
-            var existPadInGroupSql = "SELECT * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName = ?";
-            existValueInDatabase(existPadInGroupSql, [padGroup.groupid, padGroup.padName], function (bool) {
-                if (bool) {
-                    cb(false);
-                } else {
-                    var addPadToGroupSql = "INSERT INTO GroupPads VALUES(?, ?)";
-                    var addPadToGroupQuery = connection.query(addPadToGroupSql, [padGroup.groupid, padGroup.padName]);
-                    addPadToGroupQuery.on('error', mySqlErrorHandler);
-                    addPadToGroupQuery.on('end', function () {
-                        addPadToEtherpad(padGroup.padName, padGroup.groupid, function () {
-                            cb(true);
-                        });
-                    });
-                }
-            });
-        });
+      socket.on("add-pad-to-group", function (padGroup, cb) {
+	  if (padGroup.groupid == "" || padGroup.padName == "")
+	      cb(false);
+	  var existPadInGroupSql = "SELECT * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName = ?";
+	  existValueInDatabase(existPadInGroupSql, [padGroup.groupid, padGroup.padName], function (bool) {
+	      if (bool) {
+		  cb(false);
+	      } else {
+		  var addPadToGroupSql = "INSERT INTO GroupPads VALUES(?, ?)";
+		  var addPadToGroupQuery = connection.query(addPadToGroupSql, [padGroup.groupid, padGroup.padName]);
+		  addPadToGroupQuery.on('error', mySqlErrorHandler);
+		  addPadToGroupQuery.on('end', function () {
+		      addPadToEtherpad(padGroup.padName, padGroup.groupid, function () {
+			  cb(true);
+		      });
+		  });
+	      }
+	  });
+      });
 
-        socket.on("add-user-to-group", function (userGroup, cb) {
-            var existPadInGroupSql = "SELECT * from UserGroup where UserGroup.groupID = ? and UserGroup.userId = ?";
-            existValueInDatabase(existPadInGroupSql, [userGroup.groupid, userGroup.userID], function (bool) {
-                if (bool) {
-                    cb(false);
-                } else {
-                    var addPadToGroupSql = "INSERT INTO UserGroup VALUES(?, ?,2)";
+      socket.on("add-user-to-group", function (userGroup, cb) {
+	  var existPadInGroupSql = "SELECT * from UserGroup where UserGroup.groupID = ? and UserGroup.userId = ?";
+	  existValueInDatabase(existPadInGroupSql, [userGroup.groupid, userGroup.userID], function (bool) {
+	      if (bool) {
+		  cb(false);
+	      } else {
+		  var addPadToGroupSql = "INSERT INTO UserGroup VALUES(?, ?,2)";
 
-                    var addPadToGroupQuery = connection.query(addPadToGroupSql, [userGroup.userID, userGroup.groupid]);
-                    addPadToGroupQuery.on('error', mySqlErrorHandler);
-                    addPadToGroupQuery.on('end', function () {
-                        cb(true);
-                    });
-                }
-            });
-        });
+		  var addPadToGroupQuery = connection.query(addPadToGroupSql, [userGroup.userID, userGroup.groupid]);
+		  addPadToGroupQuery.on('error', mySqlErrorHandler);
+		  addPadToGroupQuery.on('end', function () {
+		      cb(true);
+		  });
+	      }
+	  });
+      });
 
-        socket.on("search-all-user", function (searchTerm, cb) {
-            var allUsers = [];
-            var allSql = "Select * from User where User.name like ?";
-            var queryUsers = connection.query(allSql, ["%" + searchTerm + "%"]);
-            queryUsers.on('error', mySqlErrorHandler);
-            queryUsers.on('result', function (foundUser) {
-                connection.pause();
-                user = {};
-                user.id = foundUser.userID;
-                user.name = foundUser.name;
-                user.email =foundUser.email;
-                user.active = foundUser.active;
-                var sqlAmGroups = 'Select count(groupID) as amount from UserGroup Where UserGroup.userID = ?';
-                var queryGroups = connection2.query(sqlAmGroups, [user.id]);
-                queryGroups.on('error', mySqlErrorHandler);
-                queryGroups.on('result', function (groups) {
-                    user.amGroups = groups.amount;
-                    allUsers.push(user);
-                    connection.resume();
-                });
-            });
-            queryUsers.on('end', function () {
-                cb(allUsers);
-            });
+      socket.on("search-all-user", function (searchTerm, cb) {
+	  var allUsers = [];
+	  var allSql = "Select * from User where User.name like ?";
+	  var queryUsers = connection.query(allSql, ["%" + searchTerm + "%"]);
+	  queryUsers.on('error', mySqlErrorHandler);
+	  queryUsers.on('result', function (foundUser) {
+	      connection.pause();
+	      user = {};
+	      user.id = foundUser.userID;
+	      user.name = foundUser.name;
+	      user.email =foundUser.email;
+	      user.active = foundUser.active;
+	      var sqlAmGroups = 'Select count(groupID) as amount from UserGroup Where UserGroup.userID = ?';
+	      var queryGroups = connection2.query(sqlAmGroups, [user.id]);
+	      queryGroups.on('error', mySqlErrorHandler);
+	      queryGroups.on('result', function (groups) {
+		  user.amGroups = groups.amount;
+		  allUsers.push(user);
+		  connection.resume();
+	      });
+	  });
+	  queryUsers.on('end', function () {
+	      cb(allUsers);
+	  });
 
-        });
+      });
 
-        socket.on("add-user", function (user, cb) {
-                        /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
+      socket.on("add-user", function (user, cb) {
+		      /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
 
-        var Ergebnis = user.name.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
-        if (Ergebnis == null) {
-            cb(false, 'Email is not valid!');
-        }
-            var existUser = "SELECT * from User where User.email = ?";
-            existValueInDatabase(existUser, [user.name], function (exists) {
-                if (exists) {
-                    cb(false, 'User already exisits!');
-                } else {
-                    var addUserSql = "";
-                    createSalt(function (salt) {
-                        getPassword(function (consString) {
-                        /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
-                            addUserSql = "INSERT INTO User VALUES(null,?, ?,null, 0 ,null ,?, ?, 0)";
-                            var addUserQuery = connection.query(addUserSql, [user.name,user.name, consString, salt]);
-                            addUserQuery.on('error', mySqlErrorHandler);
-                            addUserQuery.on('result', function (newUser) {
-                                connection.pause();
-                                addUserToEtherpad(newUser.insertId, function () {
-                                    connection.resume();
-                            var msg = eMailAuth.invitationfromadminmsg;
-                            var urlTok= user.baseurl + 'confirm/' + consString;
-                            msg = msg.replace(/<url>/, urlTok);
-                            var message = {
-                                text: msg,
-                                from: eMailAuth.invitationfrom,
-                                to: email + " <" + user.name + ">",
-                                subject: eMailAuth.invitationsubject
-                            };
-                            if (eMailAuth.smtp == "false") {
-                                var nodemailer = require('nodemailer');
-                                var transport = nodemailer.createTransport("sendmail");
-                                transport.sendMail(message);
-                            }
-                            else {
-                                emailserver.send(message, function (err) {
-                                    log('debub' , 'message sent');
-                                    if (err) {
-                                        log('error', err);
-                                    }
-                                });
-                            }
-                                });
-                            });
-                            addUserQuery.on('end', function () {
-                                cb(true);
-                            });
-                        });
-                    });
+      var Ergebnis = user.name.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
+      if (Ergebnis == null) {
+	  cb(false, 'Email is not valid!');
+      }
+	  var existUser = "SELECT * from User where User.email = ?";
+	  existValueInDatabase(existUser, [user.name], function (exists) {
+	      if (exists) {
+		  cb(false, 'User already exisits!');
+	      } else {
+		  var addUserSql = "";
+		  createSalt(function (salt) {
+		      getPassword(function (consString) {
+		      /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
+			  addUserSql = "INSERT INTO User VALUES(null,?, ?,null, 0 ,null ,?, ?, 0)";
+			  var addUserQuery = connection.query(addUserSql, [user.name,user.name, consString, salt]);
+			  addUserQuery.on('error', mySqlErrorHandler);
+			  addUserQuery.on('result', function (newUser) {
+			      connection.pause();
+			      addUserToEtherpad(newUser.insertId, function () {
+				  connection.resume();
+			  var msg = eMailAuth.invitationfromadminmsg;
+			  var urlTok= user.baseurl + 'confirm/' + consString;
+			  msg = msg.replace(/<url>/, urlTok);
+			  var message = {
+			      text: msg,
+			      from: eMailAuth.invitationfrom,
+			      to: email + " <" + user.name + ">",
+			      subject: eMailAuth.invitationsubject
+			  };
+			  if (eMailAuth.smtp == "false") {
+			      var nodemailer = require('nodemailer');
+			      //var transport = nodemailer.createTransport("sendmail");
+			      //transport.sendMail(message);
+			      let transporter = nodemailer.createTransport({
+				  sendmail: true,
+				  newline: 'unix',
+				  path: '/usr/sbin/sendmail'
+			      });
+			      transporter.sendMail(message
+			      , (err, info) => {
+			      console.log(err);
+			      console.log(info);
+			      });
 
-                }
-            });
-        });
+			  }
+			  else {
+			      emailserver.send(message, function (err) {
+				  log('debub' , 'message sent');
+				  if (err) {
+				      log('error', err);
+				  }
+			      });
+			  }
+			      });
+			  });
+			  addUserQuery.on('end', function () {
+			      cb(true);
+			  });
+		      });
+		  });
 
-        socket.on("deactivate-user", function (user, cb) {
-            var sqlUpdate = "UPDATE User SET User.active = 0 where User.userID = ?";
-            var updateQuery = connection.query(sqlUpdate, [user.id]);
-            updateQuery.on('error', function(err) {
-                mySqlErrorHandler(err);
-                var retval = {
-                    success: false
-                };
-                cb(retval);
-            });
-            updateQuery.on('end', function () {
-                var retval = {
-                    success: true
-                };
-                log('debug', "User deactivated");
-                cb(retval);
-            });
-        });
+	      }
+	  });
+      });
 
-        socket.on("activate-user", function (user, cb) {
-            var sqlUpdate = "UPDATE User SET User.active = 1 where User.userID = ?";
-            var updateQuery = connection.query(sqlUpdate, [user.id]);
+      socket.on("deactivate-user", function (user, cb) {
+	  var sqlUpdate = "UPDATE User SET User.active = 0 where User.userID = ?";
+	  var updateQuery = connection.query(sqlUpdate, [user.id]);
+	  updateQuery.on('error', function(err) {
+	      mySqlErrorHandler(err);
+	      var retval = {
+		  success: false
+	      };
+	      cb(retval);
+	  });
+	  updateQuery.on('end', function () {
+	      var retval = {
+		  success: true
+	      };
+	      log('debug', "User deactivated");
+	      cb(retval);
+	  });
+      });
 
-            updateQuery.on('error', function(err) {
-                mySqlErrorHandler(err);
-                var retval = {
-                    success: false
-                };
-                cb(retval);
-            });
-            updateQuery.on('end', function () {
-                var retval = {
-                    success: true
-                };
-                log('debug', "User activated");
-                cb(retval);
-            });
-        });
+      socket.on("activate-user", function (user, cb) {
+	  var sqlUpdate = "UPDATE User SET User.active = 1 where User.userID = ?";
+	  var updateQuery = connection.query(sqlUpdate, [user.id]);
 
-        socket.on("reset-pw-user", function (vals, cb) {
-            getPassword(function (pw) {
-                var userSql = "SELECT * from User where User.userID = ?";
-                var queryUser = connection.query(userSql, [vals.id]);
-                queryUser.on('error', mySqlErrorHandler);
-                queryUser.on('result', function (user) {
-                    var msg = eMailAuth.resetpwmsg;
-                    msg = msg.replace(/<password>/, pw);
-                    var message = {
-                        text: msg,
-                        from: "NO-REPLY <" + eMailAuth.resetfrom + ">",
-                        to: user.email+ " <" + user.email+ ">",
-                        subject: eMailAuth.resetsubject
-                    };
-                    var nodemailer = require('nodemailer');
-                    var transport = nodemailer.createTransport("sendmail");
-                    createSalt(function (salt) {
-                        encryptPassword(pw, salt, function (encrypted) {
-                            if (eMailAuth.smtp == 'false') {
-                                transport.sendMail(message);
-                                var retval = {};
-                                retval.id = vals.id;
-                                retval.row = vals.row;
-                                var sqlUpdate = "UPDATE User SET User.password = ?, User.salt = ? where User.userID = ?";
-                                var updateQuery = connection.query(sqlUpdate, [encrypted, salt, retval.id]);
-                                updateQuery.on('error', mySqlErrorHandler);
-                                updateQuery.on('end', function () {
-                                    retval.success = true;
-                                    log('debug', "User password reset");
-                                    cb(retval);
-                                });
-                            }
-                            else {
-                                emailserver.send(message, function (err) {
-                                    var retval = {};
-                                    retval.id = vals.id;
-                                    retval.row = vals.row;
-                                    if (err) {
-                                        retval.success = false;
-                                        cb(retval);
-                                    } else {
-                                        var sqlUpdate = "UPDATE User SET User.password = ?, User.salt = ? where User.userID = ?";
-                                        var updateQuery = connection.query(sqlUpdate, [encrypted, salt, retval.id]);
-                                        updateQuery.on('error', mySqlErrorHandler);
-                                        updateQuery.on('end', function () {
-                                            retval.success = true;
-                                            log('debug', "User password reset");
-                                            cb(retval);
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    });
-                });
-            });
-        });
+	  updateQuery.on('error', function(err) {
+	      mySqlErrorHandler(err);
+	      var retval = {
+		  success: false
+	      };
+	      cb(retval);
+	  });
+	  updateQuery.on('end', function () {
+	      var retval = {
+		  success: true
+	      };
+	      log('debug', "User activated");
+	      cb(retval);
+	  });
+      });
 
-        socket.on("delete-user", function (userid, hard, cb) {
-            var isOwner = "SELECT * from User where userID= ?";
-            existValueInDatabase(isOwner, [userid], function (exist) {
-                if (exist && !hard) {
-                    cb(false);
-                } else if (!exist || (exist && hard)) {
-                    var userSQL = "DELETE FROM User where User.userID = ?";
-                    var queryDeleteUser = connection.query(userSQL, [userid]);
-                    queryDeleteUser.on('error', mySqlErrorHandler);
-                    queryDeleteUser.on('end', function () {
-                        var userGroupSQL = "DELETE FROM UserGroup where UserGroup.userID = ?";
-                        var queryDeleteUserGroup = connection.query(userGroupSQL, [userid]);
-                        queryDeleteUserGroup.on('error', mySqlErrorHandler);
-                        queryDeleteUserGroup.on('end', function () {
-                            deleteUserFromEtherPad(userid, function () {
-                                cb(true);
-                            });
-                        });
-                    });
-                }
-            });
-        });
+      socket.on("reset-pw-user", function (vals, cb) {
+	  getPassword(function (pw) {
+	      var userSql = "SELECT * from User where User.userID = ?";
+	      var queryUser = connection.query(userSql, [vals.id]);
+	      queryUser.on('error', mySqlErrorHandler);
+	      queryUser.on('result', function (user) {
+		  var msg = eMailAuth.resetpwmsg;
+		  msg = msg.replace(/<password>/, pw);
+		  var message = {
+		      text: msg,
+		      from: "NO-REPLY <" + eMailAuth.resetfrom + ">",
+		      to: user.email+ " <" + user.email+ ">",
+		      subject: eMailAuth.resetsubject
+		  };
+		  var nodemailer = require('nodemailer');
+		  //var transport = nodemailer.createTransport("sendmail");
+		  createSalt(function (salt) {
+		      encryptPassword(pw, salt, function (encrypted) {
+			  if (eMailAuth.smtp == 'false') {
+		   //           transport.sendMail(message);
+			  let transporter = nodemailer.createTransport({
+				sendmail: true,
+				newline: 'unix',
+				path: '/usr/sbin/sendmail'
+			  });
+			    transporter.sendMail(message
+			    , (err, info) => {
+				  console.log(info);
+			    });
+			      var retval = {};
+			      retval.id = vals.id;
+			      retval.row = vals.row;
+			      var sqlUpdate = "UPDATE User SET User.password = ?, User.salt = ? where User.userID = ?";
+			      var updateQuery = connection.query(sqlUpdate, [encrypted, salt, retval.id]);
+			      updateQuery.on('error', mySqlErrorHandler);
+			      updateQuery.on('end', function () {
+				  retval.success = true;
+				  log('debug', "User password reset");
+				  cb(retval);
+			      });
+			  }
+			  else {
+			      emailserver.send(message, function (err) {
+				  var retval = {};
+				  retval.id = vals.id;
+				  retval.row = vals.row;
+				  if (err) {
+				      retval.success = false;
+				      cb(retval);
+				  } else {
+				      var sqlUpdate = "UPDATE User SET User.password = ?, User.salt = ? where User.userID = ?";
+				      var updateQuery = connection.query(sqlUpdate, [encrypted, salt, retval.id]);
+				      updateQuery.on('error', mySqlErrorHandler);
+				      updateQuery.on('end', function () {
+					  retval.success = true;
+					  log('debug', "User password reset");
+					  cb(retval);
+				      });
+				  }
+			      });
+			  }
+		      });
+		  });
+	      });
+	  });
+      });
 
-        socket.on("search-pads-of-user", function (searchTerm, cb) {
-            var allPads = [];
-            var allSql = "Select * from UserGroup where UserGroup.userID = ?";
-            var queryGroups = connection.query(allSql, [searchTerm.id]);
-            queryGroups.on('error', mySqlErrorHandler);
-            queryGroups.on('result', function (foundGroup) {
-                connection.pause();
-                var allPadsOfGroupSql = "Select * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName like ?";
-                var allPadsOfGroupQuery = connection2.query(allPadsOfGroupSql, [foundGroup.groupID, searchTerm.term]);
-                allPadsOfGroupQuery.on('error', mySqlErrorHandler);
-                allPadsOfGroupQuery.on('result', function (foundPad) {
-                    var pad = {};
-                    pad.name = foundPad.PadName;
-                    allPads.push(pad);
-                });
-                allPadsOfGroupQuery.on('end', function () {
-                    connection.resume();
-                });
-            });
-            queryGroups.on('end', function () {
-                cb(allPads);
-            });
-        });
+      socket.on("delete-user", function (userid, hard, cb) {
+	  var isOwner = "SELECT * from User where userID= ?";
+	  existValueInDatabase(isOwner, [userid], function (exist) {
+	      if (exist && !hard) {
+		  cb(false);
+	      } else if (!exist || (exist && hard)) {
+		  var userSQL = "DELETE FROM User where User.userID = ?";
+		  var queryDeleteUser = connection.query(userSQL, [userid]);
+		  queryDeleteUser.on('error', mySqlErrorHandler);
+		  queryDeleteUser.on('end', function () {
+		      var userGroupSQL = "DELETE FROM UserGroup where UserGroup.userID = ?";
+		      var queryDeleteUserGroup = connection.query(userGroupSQL, [userid]);
+		      queryDeleteUserGroup.on('error', mySqlErrorHandler);
+		      queryDeleteUserGroup.on('end', function () {
+			  deleteUserFromEtherPad(userid, function () {
+			      cb(true);
+			  });
+		      });
+		  });
+	      }
+	  });
+      });
 
-        socket.on("search-groups-of-user", function (searchTerm, cb) {
-            var allGroups = [];
-            var allSql = "Select * from UserGroup where UserGroup.userID = ?";
-            var queryGroup = connection.query(allSql, [searchTerm.id]);
-            queryGroup.on('error', mySqlErrorHandler);
-            queryGroup.on('result', function (foundGroup) {
-                connection.pause();
-                var groupNameSql = "Select * from Groups where Groups.groupID = ? and Groups.name like ?";
-                var queryGroupName = connection2.query(groupNameSql, [foundGroup.groupID, "%" + searchTerm.name + "%"]);
-                queryGroupName.on('error', mySqlErrorHandler);
-                var group = {};
-                queryGroupName.on('result', function (foundGroupName) {
-                    group.id = foundGroup.groupID;
-                    group.name = foundGroupName.name;
-                });
-                queryGroupName.on('end', function () {
-                    allGroups.push(group);
-                    connection.resume();
-                });
-            });
-            queryGroup.on('end', function () {
-                cb(allGroups);
-            });
-        });
+      socket.on("search-pads-of-user", function (searchTerm, cb) {
+	  var allPads = [];
+	  var allSql = "Select * from UserGroup where UserGroup.userID = ?";
+	  var queryGroups = connection.query(allSql, [searchTerm.id]);
+	  queryGroups.on('error', mySqlErrorHandler);
+	  queryGroups.on('result', function (foundGroup) {
+	      connection.pause();
+	      var allPadsOfGroupSql = "Select * from GroupPads where GroupPads.GroupID = ? and GroupPads.PadName like ?";
+	      var allPadsOfGroupQuery = connection2.query(allPadsOfGroupSql, [foundGroup.groupID, searchTerm.term]);
+	      allPadsOfGroupQuery.on('error', mySqlErrorHandler);
+	      allPadsOfGroupQuery.on('result', function (foundPad) {
+		  var pad = {};
+		  pad.name = foundPad.PadName;
+		  allPads.push(pad);
+	      });
+	      allPadsOfGroupQuery.on('end', function () {
+		  connection.resume();
+	      });
+	  });
+	  queryGroups.on('end', function () {
+	      cb(allPads);
+	  });
+      });
 
-        socket.on("add-group-to-user", function (userGroup, cb) {
-            var existGroupInUserSql = "SELECT * from UserGroup where UserGroup.groupID = ? and UserGroup.userId = ?";
-            existValueInDatabase(existGroupInUserSql, [userGroup.groupid, userGroup.userID], function (bool) {
-                if (bool) {
-                    cb(false);
-                } else {
-                    var addGroupToUserSql = "INSERT INTO UserGroup VALUES(?,?,2)";
-                    var addGroupToUserQuery = connection.query(addGroupToUserSql, [userGroup.userID, userGroup.groupid]);
-                    addGroupToUserQuery.on('error', mySqlErrorHandler);
-                    addGroupToUserQuery.on('end', function () {
-                        cb(true);
-                    });
-                }
-            });
-        });
+      socket.on("search-groups-of-user", function (searchTerm, cb) {
+	  var allGroups = [];
+	  var allSql = "Select * from UserGroup where UserGroup.userID = ?";
+	  var queryGroup = connection.query(allSql, [searchTerm.id]);
+	  queryGroup.on('error', mySqlErrorHandler);
+	  queryGroup.on('result', function (foundGroup) {
+	      connection.pause();
+	      var groupNameSql = "Select * from Groups where Groups.groupID = ? and Groups.name like ?";
+	      var queryGroupName = connection2.query(groupNameSql, [foundGroup.groupID, "%" + searchTerm.name + "%"]);
+	      queryGroupName.on('error', mySqlErrorHandler);
+	      var group = {};
+	      queryGroupName.on('result', function (foundGroupName) {
+		  group.id = foundGroup.groupID;
+		  group.name = foundGroupName.name;
+	      });
+	      queryGroupName.on('end', function () {
+		  allGroups.push(group);
+		  connection.resume();
+	      });
+	  });
+	  queryGroup.on('end', function () {
+	      cb(allGroups);
+	  });
+      });
 
-        socket.on("search-groups-not-in-user", function (vals, cb) {
-            var allGroups = [];
-            var allSql = "select distinct Groups.name, Groups.groupID from Groups left join UserGroup on(UserGroup.groupID = Groups.groupID) where Groups.groupId NOT IN " +
-                "(Select distinct UserGroup.groupID from UserGroup where UserGroup.userID = ?) and Groups.name like ?";
-            var queryGroups = connection.query(allSql, [vals.id, "%" + vals.name + "%"]);
-            queryGroups.on('error', mySqlErrorHandler);
-            queryGroups.on('result', function (group) {
-                var grou = {};
-                grou.name = group.name;
-                grou.id = group.groupID;
-                allGroups.push(grou);
-            });
-            queryGroups.on('end', function () {
-                cb(allGroups);
-            });
-        });
+      socket.on("add-group-to-user", function (userGroup, cb) {
+	  var existGroupInUserSql = "SELECT * from UserGroup where UserGroup.groupID = ? and UserGroup.userId = ?";
+	  existValueInDatabase(existGroupInUserSql, [userGroup.groupid, userGroup.userID], function (bool) {
+	      if (bool) {
+		  cb(false);
+	      } else {
+		  var addGroupToUserSql = "INSERT INTO UserGroup VALUES(?,?,2)";
+		  var addGroupToUserQuery = connection.query(addGroupToUserSql, [userGroup.userID, userGroup.groupid]);
+		  addGroupToUserQuery.on('error', mySqlErrorHandler);
+		  addGroupToUserQuery.on('end', function () {
+		      cb(true);
+		  });
+	      }
+	  });
+      });
 
-        socket.on("direct-to-group-pad", function (author, groupid, pad_name, cb) {
-            getEtherpadGroupFromNormalGroup(groupid, function (group) {
-                addUserToEtherpad(author, function (etherpad_author) {
-                    sessionManager.createSession(group, etherpad_author.authorID, Date.now() + 7200000,
-                        function (err, session) {
-                            cb(session.sessionID, group, pad_name);
-                        });
-                });
-            });
-        });
-    });
-    cb();
+      socket.on("search-groups-not-in-user", function (vals, cb) {
+	  var allGroups = [];
+	  var allSql = "select distinct Groups.name, Groups.groupID from Groups left join UserGroup on(UserGroup.groupID = Groups.groupID) where Groups.groupId NOT IN " +
+	      "(Select distinct UserGroup.groupID from UserGroup where UserGroup.userID = ?) and Groups.name like ?";
+	  var queryGroups = connection.query(allSql, [vals.id, "%" + vals.name + "%"]);
+	  queryGroups.on('error', mySqlErrorHandler);
+	  queryGroups.on('result', function (group) {
+	      var grou = {};
+	      grou.name = group.name;
+	      grou.id = group.groupID;
+	      allGroups.push(grou);
+	  });
+	  queryGroups.on('end', function () {
+	      cb(allGroups);
+	  });
+      });
+
+      socket.on("direct-to-group-pad", function (author, groupid, pad_name, cb) {
+	  getEtherpadGroupFromNormalGroup(groupid, function (group) {
+	      addUserToEtherpad(author, function (etherpad_author) {
+		  sessionManager.createSession(group, etherpad_author.authorID, Date.now() + 7200000,
+		      function (err, session) {
+			  cb(session.sessionID, group, pad_name);
+		      });
+	      });
+	  });
+      });
+  });
+  cb();
 };
 
 

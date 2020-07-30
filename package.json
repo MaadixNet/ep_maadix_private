@@ -32,38 +32,59 @@
         }
       },
       "/var/www/etherpad/etherpad-lite"
+    ],
+    [
+      {
+        "raw": "https://github.com/MaadixNet/ep_maadix#e540472",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "https://github.com/MaadixNet/ep_maadix#e540472",
+        "spec": "git+https://github.com/MaadixNet/ep_maadix.git#e540472",
+        "type": "hosted",
+        "hosted": {
+          "type": "github",
+          "ssh": "git@github.com:MaadixNet/ep_maadix.git#e540472",
+          "sshUrl": "git+ssh://git@github.com/MaadixNet/ep_maadix.git#e540472",
+          "httpsUrl": "git+https://github.com/MaadixNet/ep_maadix.git#e540472",
+          "gitUrl": "git://github.com/MaadixNet/ep_maadix.git#e540472",
+          "shortcut": "github:MaadixNet/ep_maadix#e540472",
+          "directUrl": "https://raw.githubusercontent.com/MaadixNet/ep_maadix/e540472/package.json"
+        }
+      },
+      "/var/www/etherpad/etherpad-lite"
     ]
   ],
-  "_from": "git+https://github.com/MaadixNet/ep_maadix.git",
+  "_from": "git+https://github.com/MaadixNet/ep_maadix.git#e540472",
   "_id": "ep_maadix@0.1.3",
   "_inCache": true,
   "_location": "/ep_maadix",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "https://github.com/MaadixNet/ep_maadix",
+    "raw": "https://github.com/MaadixNet/ep_maadix#e540472",
     "scope": null,
     "escapedName": null,
     "name": null,
-    "rawSpec": "https://github.com/MaadixNet/ep_maadix",
-    "spec": "git+https://github.com/MaadixNet/ep_maadix.git",
+    "rawSpec": "https://github.com/MaadixNet/ep_maadix#e540472",
+    "spec": "git+https://github.com/MaadixNet/ep_maadix.git#e540472",
     "type": "hosted",
     "hosted": {
       "type": "github",
-      "ssh": "git@github.com:MaadixNet/ep_maadix.git",
-      "sshUrl": "git+ssh://git@github.com/MaadixNet/ep_maadix.git",
-      "httpsUrl": "git+https://github.com/MaadixNet/ep_maadix.git",
-      "gitUrl": "git://github.com/MaadixNet/ep_maadix.git",
-      "shortcut": "github:MaadixNet/ep_maadix",
-      "directUrl": "https://raw.githubusercontent.com/MaadixNet/ep_maadix/master/package.json"
+      "ssh": "git@github.com:MaadixNet/ep_maadix.git#e540472",
+      "sshUrl": "git+ssh://git@github.com/MaadixNet/ep_maadix.git#e540472",
+      "httpsUrl": "git+https://github.com/MaadixNet/ep_maadix.git#e540472",
+      "gitUrl": "git://github.com/MaadixNet/ep_maadix.git#e540472",
+      "shortcut": "github:MaadixNet/ep_maadix#e540472",
+      "directUrl": "https://raw.githubusercontent.com/MaadixNet/ep_maadix/e540472/package.json"
     }
   },
   "_requiredBy": [
     "#USER"
   ],
-  "_resolved": "git+https://github.com/MaadixNet/ep_maadix.git#74e20a49af1bdc6b4dfdb9e81d7ea953842def0a",
-  "_shasum": "9bb67a2318eb8a8e41eafff549f8a9e2a6d14e82",
+  "_resolved": "git+https://github.com/MaadixNet/ep_maadix.git#e5404724875a563bd208c947dfb7b50af1145b69",
+  "_shasum": "a08e9ce091b12a67a31700d6d90283e5c4e9acd7",
   "_shrinkwrap": null,
-  "_spec": "https://github.com/MaadixNet/ep_maadix",
+  "_spec": "https://github.com/MaadixNet/ep_maadix#e540472",
   "_where": "/var/www/etherpad/etherpad-lite",
   "author": {
     "name": "MaadiX",
@@ -77,7 +98,7 @@
     "crypto": "0.0.3",
     "emailjs": "1.0.8",
     "formidable": "1.1.1",
-    "mysql": "2.12.0",
+    "mysql": "2.18.1",
     "nodemailer": "0.5.2"
   },
   "description": "With the maadix plugin it's possible to create private pads in groups and invite users. It's a User-Management System. It allows User to register (otional), authenticate, to create groups and to create pads in groups.",
