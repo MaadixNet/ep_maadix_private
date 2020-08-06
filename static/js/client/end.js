@@ -258,27 +258,27 @@ jQuery(document).ready(function(){
                         data.groupId = $("#createPrivateGroupPad").data('groupid');
 //                      console.log(data);
                         post(data, url+'createPad' ,function(data){
-                                if(!data.success){
-                                        console.log(data.error);
-                                        $("#createPrivatePadForm input").each(function(){
-                                                if($(this).next().hasClass("errorUp"))
-                                                        $(this).next().remove();
-                                                //if($(this).is('#createPrivateGroup') && !$(this).next().hasClass("errorUp") && data.error == 'Group already exists');
-                                                        $(this).parent().append('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
-                                                        $("#createPrivatePadForm .errorUp").delay(2000).fadeOut(1000);
-                                        });
-                                }else{
-                                    $("#groupName").val('');
-                                    $("#wrapper").append('<div id="overlay"></div>');
-                                    $("#wrapper").append('<div id="lightBox">'+
+                            if(!data.success){
+                                  console.log(data.error);
+                                  $("#createPrivatePadForm input").each(function(){
+                                  if($(this).next().hasClass("errorUp"))
+                                      $(this).next().remove();
+                                      $(this).parent().append('<div class="errorUp error"><span class="arrowUp"></span><span lang="en">' + data.error +'</span></div>');
+                                      $("#createPrivatePadForm .errorUp").delay(2000).fadeOut(1000);
+                                  });
+                              }else{
+                                  console.log("pad has been created");
+                                  $("#groupName").val('');
+                                  $("#wrapper").append('<div id="overlay"></div>');
+                                  $("#wrapper").append('<div id="lightBox">'+
                                             '<div id="lightBoxMain" data-groupid= "'+ data.groupid+'" ><div class="headline"></div><div class="content"><h3 lang="en" class="center">Creating Pad</h3></div></div></div>');
 
-                                    $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
+                                  $("#lightBox").css("margin-top",-$("#lightBox").height()/2);
 
-                                        window.location = loc;
-                                }
-                        });
-                });
+                                  window.location = loc;
+                              }
+                      });
+              });
         });
 
         //Function to go to pad iframe - Used in group.ejs

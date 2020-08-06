@@ -5,9 +5,7 @@
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
 http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -254,7 +252,6 @@ function getPadsSettings(cb) {
 /*function getSingleSetting(settingID,cb) {
     var getSettingsSql = "Select * from Settings WHERE Settings.key = ?";
     var getSettingsQuery = connection2.query(getSettingsSql, [settingID]);
-
     getSettingsQuery.on('error', mySqlErrorHandler);
     getSettingsQuery.on('result', function (result) {
         cb(result.value);
@@ -284,7 +281,6 @@ function deleteGroupFromEtherpad(id, cb) {
         });
     });
 }
-
 function addPadToEtherpad(padName, groupId, cb) {
     getEtherpadGroupFromNormalGroup(groupId, function (group) {
         groupManager.createGroupPad(group, padName, function (err) {
@@ -298,7 +294,16 @@ function addPadToEtherpad(padName, groupId, cb) {
         });
     });
 }
-
+/*
+function addPadToEtherpad(padName, groupId) {
+    getEtherpadGroupFromNormalGroup(groupId, function (group) {
+        (async () => {
+            let padcreated = await groupManager.createGroupPad(group, padName)
+            return padcreated;
+          })();
+        });
+}
+*/
 function deletePadFromEtherpad(name, groupid, cb) {
     getEtherpadGroupFromNormalGroup(groupid, function (group) {
         padManager.removePad(group + "$" + name);
@@ -995,12 +1000,10 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                             var addPadToGroupQuery = connection.query(addPadToGroupSql, [fields.groupId, fields.padName]);
                             addPadToGroupQuery.on('error', mySqlErrorHandler);
                             addPadToGroupQuery.on('end', function () {
-                                addPadToEtherpad(fields.padName, fields.groupId, function () {
                                     var data = {};
-                                    data.success = true;
-                                    data.error = null;
-                                    res.send(data);
-                                });
+                                      data.success = true;
+                                      data.error = null;
+                                      res.send(data);
                             });
                         }
                     });
@@ -1516,7 +1519,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             cb(false, PASSWORD_WRONG);
             return false; // break execution early
         }
-
         var Ergebnis = user.email.toString().match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9-]+.[a-zA-Z]{2,4}/);
         if (Ergebnis == null) {
             cb(false, NO_VALID_MAIL);
@@ -1932,24 +1934,20 @@ function getPadsOfGroup(id, padname, cb) {
       if (pad.name != "") {
           console.log("pad name " + pad.name);
 	  getEtherpadGroupFromNormalGroup(id, function (group) {
-	      log('debug', 'getEtherpadGroupFromNormalGroup cb');
-	      //padManager.getPad(group + "$" + pad.name, null, function (err, origPad) {
-              //let origPad = padManager.getPad(group + "$" + pad.name);
+	  (async() => {
+              let origPad = await padManager.getPad(group + "$" + pad.name);
               var padId = group + "$" + pad.name;
-              console.log("pad name is " + group + "$" + pad.name);
-              //if (origPad===null)
-              //    throw new customError("there was an error getting pad user", "ep_maadix");
-              // TODO: de we need to check password fro groups pads?
-              let isProtected = api.isPasswordProtected(padId);
-              console.log("is protected " + isProtected);
-              let timestampedit = api.getLastEdited(padId);
-              console.log("is protected " + timestampedit);
-              //pad.lastedit = converterPad(lastEdit);
-              pad.isProtected = isProtected;
-              pad.timestampedit = timestampedit;
-              allPads.push(pad);
-              connection.resume();
-	  });
+              if (origPad===null)
+                  throw new customError("there was an error getting pad list", "ep_maadix");
+              let resultObject = await api.getLastEdited(padId);
+              lastEdited = resultObject.lastEdited;
+	      pad.lastedit = converterPad(lastEdited);
+	      pad.timestampedit = lastEdited;
+	      allPads.push(pad);
+	      connection.resume();
+
+	    })()
+	});
       } else {
 	  connection.resume();
       }
@@ -2608,5 +2606,3 @@ exports.socketio = function (hook_name, args, cb) {
   });
   cb();
 };
-
-

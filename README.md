@@ -1,7 +1,7 @@
 ep_maadix
 =========
 
-This plugin adds the following features to etherpad-lite:
+This plugin adds the following features to Etherpad:
 
 - User-Management System
 - Group-Management System
@@ -18,7 +18,7 @@ https://demo.maadix.net/etherpad/
 Installation
 ------------
 
-In order to use this plugin you have to [configure Etherpad Lite to use MySQL as backend database](https://github.com/ether/etherpad-lite/wiki/How-to-use-Etherpad-Lite-with-MySQL).
+In order to use this plugin you have to [configure Etherpad to use MySQL as backend database](https://github.com/ether/etherpad-lite/wiki/How-to-use-Etherpad-Lite-with-MySQL).
 
 At the moment you still cannot install the plugin from the administrator interface so you have to clone it:
 
@@ -32,7 +32,7 @@ Then use the provided [SQL script](/sql_listing.sql) to create the schema:
 
     mysql -u USER -p < sql_listing.sql
 
-This pluging has been developed for an etherpad-lite installation with reverse proxy under a subpath (e.g. mydomain.com/etherpad/ )
+This pluging has been developed for an Etherpad installation with reverse proxy under a subpath (e.g. mydomain.com/etherpad/ )
 For now you still need  to add the following line in your Vhost config, in order to redirect properly non-logged in users  
 
     RedirectMatch Permanent ^/login$ /etherpad/login  
