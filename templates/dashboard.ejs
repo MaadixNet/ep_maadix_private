@@ -110,7 +110,6 @@
     						+ loc.hostname + ":" + port + "/";
     				
     				data.location = url;
-                                console.log(url);
     				$.ajax({
     					type: 'POST',
     					data: JSON.stringify(data),
@@ -126,7 +125,6 @@
 				});
 				
 	   			$(".delete").click(function(){
-	   				console.log('dfkld');
     				$("#wrapper").append('<div id="overlay"></div>');
     				$("#wrapper").append('<div id="lightBox"><div id="lightBoxHeader"><span'+
     						' class="close"><i class="demo-icon icon-cancel-circled-outline">&#xe802;</i>'+
@@ -162,6 +160,7 @@
 		 		  				success: function(data) {
 		 		  						if(data.success){
 		 		  							window.location.href = loc;	
+                                                                                        console.log("grup deleted");
 		 		  						}else{
 		 		  							console.log(data.error);
 		 		  						}	

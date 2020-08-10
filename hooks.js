@@ -30,6 +30,7 @@ var crypto = require('crypto');
 var pkg = require('./package.json');
 var formidable = require("formidable");
 var fs = require('fs');
+const util = require('util');
 
 var eMailAuth = require(__dirname + '/email.json');
 var dbAuth = settings.dbSettings;
@@ -249,15 +250,7 @@ function getPadsSettings(cb) {
         cb(settings);
     });
 }
-/*function getSingleSetting(settingID,cb) {
-    var getSettingsSql = "Select * from Settings WHERE Settings.key = ?";
-    var getSettingsQuery = connection2.query(getSettingsSql, [settingID]);
-    getSettingsQuery.on('error', mySqlErrorHandler);
-    getSettingsQuery.on('result', function (result) {
-        cb(result.value);
-    });
-}
-*/
+
 function getEtherpadGroupFromNormalGroup(id, cb) {
     var getMapperSql = "Select * from store where store.key = ?";
     var getMapperQuery = connection2.query(getMapperSql, ["mapper2group:" + id]);
@@ -273,14 +266,16 @@ function deleteGroupFromEtherpad(id, cb) {
             if (err) {
                 log('error', 'Something went wrong while deleting group from etherpad');
                 log('error', err);
-                cb();
+		
             } else {
                 log('debug', "Group deleted");
-                cb();
+                cb(true);
             }
         });
     });
 }
+const asyncDeleteGroup = util.promisify(deleteGroupFromEtherpad);
+
 function addPadToEtherpad(padName, groupId, cb) {
     getEtherpadGroupFromNormalGroup(groupId, function (group) {
         groupManager.createGroupPad(group, padName, function (err) {
@@ -1016,7 +1011,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     args.app.post('/deleteGroup', function (req, res) {
         new formidable.IncomingForm().parse(req, function (err, fields) {
             userAuthenticated(req, function (authenticated) {
-                var data = {};
                 if (authenticated) {
                     if (!fields.groupId) {
                         sendError('Group-Id not defined', res);
@@ -1043,16 +1037,46 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     var deleteGroupPadsQuery = connection2.query(deleteGroupPadsSql, [fields.groupId]);
                                     deleteGroupPadsQuery.on('error', mySqlErrorHandler);
                                     deleteGroupPadsQuery.on('end', function () {
-                                            deleteGroupFromEtherpad(fields.groupId, function () {
-                                                connection.resume();
-                                            });
+					/*
+					asyncDeleteGroup(fields.groupId)
+					  .then(resp => {
+					    console.log(resp);
+					     let data = {};
+					      data.success = true;
+					      data.error = null;
+					      res.send(data);
+
+					})
+					.catch(err => {
+					    console.log(err);
+					});
+					*/
+					let deletegroup =asyncDeleteGroup(fields.groupId);
+					if (deletegroup) {
+					let data = {};
+                                              data.success = true;
+                                              data.error = null;
+                                              res.send(data);
+					}
                                     });
                                 });
+					/*
+                                        getEtherpadGroupFromNormalGroup(fields.groupId, function (group) {
+                                        console.log("deletidng groupspspspspspsp " + group);
+                                        (async () => {
+
+                                        groupManager.deleteGroup(group);
+                                         var data = {};
+                                          data.success = true;
+                                          data.error = null;
+                                          res.send(data);
+                                      })();
+                                      });
+				     */
+				connection.resume();
                             });
                             deleteGroupQuery.on('end', function () {
-                                data.success = true;
-                                data.error = null;
-                                res.send(data);
+				console.log("DELETETION COMPLETEDDDDDDDDDDDDDDDDDD");
                             });
                         }
 
@@ -1160,7 +1184,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
     getPadsSettings(function(settings) {
         userAuthenticated(req, function (authenticated) {
           if (authenticated) {
-            console.log("user authenitcated for pad");
               getGroup(req.params.groupID, function (found, currGroup) {
                   getUser(req.session.userId, function (found, currUser) {
                     var padID = req.params.padID;
@@ -2015,28 +2038,17 @@ exports.socketio = function (hook_name, args, cb) {
       if (!socket.request.session.user || !socket.request.session.user.is_admin) return;
       socket.on("set-setting", function (key, value, cb) {
 	  setSetting(key, value, function (retval) {
-
-	      console.log('key '  + key);
-	      console.log('value ' + value);
 	    if (key=='public_pads' ){
 		var sessionreq = 'false'; 
 	       fs.readFile('settings.json', 'utf8', function(err, data) {
-		  if(IsJsonString(data)){
-			console.log('data  json is ok');
-		  } else {
-			console.log('data  json is BAAAAAAAAd');
-		  }
 		  if (err) {
 		    return console.log(err);
 		  }
 		  if (value == 0){
 		    sessionreq = 'true';
 		  }                    
-		  console.log('seesrequiered' + sessionreq);
 		  var result = data.replace(/\"requireSession.+?(?=\,)/g,'\"requireSession\" \: ' + sessionreq);
-		  //console.log('result: ' + result);
 		  if(IsJsonString(result)){
-			console.log('resul  json is ok')
 		    fs.writeFile('settings.json', result, 'utf8', function(err) {
 		      if (err) {
 			 return console.log(err);
