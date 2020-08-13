@@ -208,7 +208,7 @@ function group(hooks,context,cb){
 					searchPads('');
 				});
 			});
-			row.find(".visitPadBtn").parent().attr('href', "/p/" + groupEtherpadName + "$" + pads[i].name);
+			row.find(".visitPadBtn").parent().attr('href', baseURL + "group/" + groupId +"/pad/" + groupEtherpadName + "$" + pads[i].name);
 			resultList.append(row);
 		};	
 	};
@@ -259,18 +259,7 @@ function group(hooks,context,cb){
 	searchUsers('');
 };
 
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
+//////////GROUPS//////////////
 
 function groups(hooks, context,cb){
 	var socket, loc = document.location, port = loc.port == "" ? (loc.protocol == "https:" ? 443
@@ -332,9 +321,11 @@ function groups(hooks, context,cb){
 	var addGroup = function(name){
 		socket.emit("add-group", name, function(added){
 			if(added){
+				console.log("ADEEDS");
 				searchGroup('');
 			}else{
 				$('#textfield-group').html('Group already exists!');
+				console.log("Not added");
 			}
 		});
 	};
@@ -404,20 +395,7 @@ function groups(hooks, context,cb){
 
 };
 
-
-
-
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
+////////USERS//////////////
 
 function users(hooks, context,cb){
 	var socket, loc = document.location, port = loc.port == "" ? (loc.protocol == "https:" ? 443
@@ -610,7 +588,7 @@ function users(hooks, context,cb){
 
 
 
-///////////////////////////////////////////////////////////////////
+///////////USER/////////////////
 
 
 

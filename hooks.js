@@ -284,7 +284,7 @@ function addPadToEtherpad(padName, groupId, cb) {
                 log('error', err);
             } else {
                 log('debug', "Pad added");
-                cb();
+                cb(true);
             }
         });
     });
@@ -2202,9 +2202,8 @@ exports.socketio = function (hook_name, args, cb) {
 		  var deleteGroupPadsQuery = connection2.query(deleteGroupPadsSql, [id]);
 		  deleteGroupPadsQuery.on('error', mySqlErrorHandler);
 		  deleteGroupPadsQuery.on('end', function () {
-		      deleteGroupFromEtherpad(id, function () {
-			  connection.resume();
-		      });
+                  let deletegroup =asyncDeleteGroup(id);
+                  connection.resume();
 
 		  });
 	      });
@@ -2247,15 +2246,21 @@ exports.socketio = function (hook_name, args, cb) {
 		  addGroupQuery.on('error', mySqlErrorHandler);
 		  addGroupQuery.on('result', function (group) {
 		      connection.pause();
+                    /*
 		      groupManager.createGroupIfNotExistsFor(group.insertId.toString(), function (err) {
 			  if (err) {
 			      log('error', err);
 			  }
 			  connection.resume();
 		      });
-		  });
-		  addGroupQuery.on('end', function () {
-		      cb(true);
+                    */
+                    let groupmapper = group.insertId.toString();
+                    let grupcreated = groupManager.createGroupIfNotExistsFor(groupmapper);
+                    if (grupcreated) {
+                      console.log("NEW GROUP CREATEEEEEEEEEEEEEEEEEEEEEEEED");
+		      cb(grupcreated);
+		      connection.resume();
+		    }
 		  });
 	      }
 	  });
@@ -2274,10 +2279,9 @@ exports.socketio = function (hook_name, args, cb) {
 		  var addPadToGroupQuery = connection.query(addPadToGroupSql, [padGroup.groupid, padGroup.padName]);
 		  addPadToGroupQuery.on('error', mySqlErrorHandler);
 		  addPadToGroupQuery.on('end', function () {
-		      addPadToEtherpad(padGroup.padName, padGroup.groupid, function () {
 			  cb(true);
+			console.log("pad Created");
 		      });
-		  });
 	      }
 	  });
       });
