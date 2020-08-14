@@ -321,6 +321,7 @@ function addUserToEtherpad(userName, cb) {
 }
 */
 
+
 function addUserToEtherpad(userName) {
       let author = authorManager.createAuthorIfNotExistsFor(userName,null); 
       if (author===null)
@@ -593,7 +594,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                 console.log("New user is " + newUser.insertId);
                                 connection.pause();
                                 //addUserToEtherpad(newUser.insertId, function (cb) {
-                                let mappedUser = AddUserToEtherpad(newUser.insertId);
+                                let mappedUser = addUserToEtherpad(newUser.insertId);
+
                                 if (mappedUser) {
                                     connection.resume();
                                     var msg = eMailAuth.registrationtext;
