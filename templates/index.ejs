@@ -62,7 +62,10 @@
                     <div class="inputBlock">
                       <h4 lang="en">Create/Open a Public Pad by specific or random name</h4>
                       <form class="white">
-                        <input type="text" placeholder="Pad-Name" id="createPadName">
+                        <div class="padNameInput">
+                        <input type="text" placeholder="Pad-Name (max chars: 50)" id="createPadName" maxlength="50">
+                        <span class=helpText">Max Lenght 50 chars</span>
+                        </div>
                         <button type="submit" lang="en" id="createPublicPadByName">Create</button>
                         <button type="submit" lang="en" id="createPublicPadRandomName" class="longButton">Create Public Pad with random name</button>
                       </form>
