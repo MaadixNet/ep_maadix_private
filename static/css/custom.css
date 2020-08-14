@@ -8,7 +8,6 @@ color: #4f5f6f;
 overflow-x: hidden;
 }
  body {font-size: 1rem;
-line-height: 1.5;
 background-color: #f2f2f2;
 }
 @font-face {
@@ -85,11 +84,12 @@ min-width:320px;
 header .header-block-nav {
 margin-left: auto;
 white-space: nowrap;
-width: 100%;
+width: 50%;
 display: inline-block;
+}
+header .header-block-nav.second { 
 text-align: right;
 }
-
 header h2.title {
 margin: 0;
 color: #4f5f6f;
@@ -99,14 +99,14 @@ font-size: 1.2rem;
 article {padding:2%;}
 a {text-decoration:none; color:#44587A;}
 a:hover {color:#2D579B;}
-a.header-btn {padding: 7px;font-weight:bold;font-size:1.2rem}
+a.header-btn {padding: 7px;font-weight:bold;font-size:1rem}
 
 .clear {clear:both;}
 .center {text-align:center;}
 
 .inputBlock h4 {margin: 6px 0;}
 
-h5.padpage { margin: 7px 0;}
+h5.padpage { margin: 7px 0;font-weight: normal;}
 /********************COLS************/
 .col-md-9 {width: 75%;float:left;}
 .col-md-8 {width:66.66%;float:left;}
