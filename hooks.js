@@ -1436,7 +1436,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     userid: req.session.userId,
                     baseurl: req.session.baseurl,
                     user: user,
-                    settings: settings
+                    settings: settings,
+                    message: "Profile successfully updated"
                   };
                   res.send(eejs.require("ep_maadix/templates/user.ejs", render_args));
                 }

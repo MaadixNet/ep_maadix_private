@@ -359,6 +359,5 @@ ul.submenu li a[href]:hover {border: 1px solid #687996; color:#2D4162; }
     font-weight: 700;
   }
 }
-
-
+.resMessage {color:green; text-align: center;}
 

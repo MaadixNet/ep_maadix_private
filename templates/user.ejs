@@ -61,23 +61,28 @@
                     <div class="title-block">
                       <h3 class="title" lang="en">Edit profile</h3>                    
                     </div>
-                    <label for ="email">E-mail</label>
-                    <input type="email" name="email" id="email" placeholder="<%= user[0].email %>" class="smallMarginBottom" >
-                    <label for ="username">Username</label>
-                    <input type="text" name="username" id="username" placeholder="<%= user[0].name %>" >
+                    <% if (message) { %>
+                    <div class="resMessage"><%= message %></div>
+                    <% } %>
+                    <div class="formBody">
+                      <label for ="email">E-mail</label>
+                      <input type="email" name="email" id="email" placeholder="<%= user[0].email %>" class="smallMarginBottom" >
+                      <label for ="username">Username</label>
+                      <input type="text" name="username" id="username" placeholder="<%= user[0].name %>" >
 
-                    <label for ="fullname">Fullname</label>
-                    <input type="text" name="fullname" id="fullname" placeholder="<%= user[0].FullName%>" readonly>
+                      <label for ="fullname">Fullname</label>
+                      <input type="text" name="fullname" id="fullname" placeholder="<%= user[0].FullName%>" readonly>
 
-                    <label for ="password">Password</label>
-                    <input type="password" name="password" id="password" placeholder="Password" readonly>
+                      <label for ="password">Password</label>
+                      <input type="password" name="password" id="password" placeholder="Password" readonly>
 
-                    <label for ="passwordrepeat">Repeat password</label>
-                    <input type="password" name="passwordrepeat" id="passwordrepeat" placeholder="Confirm Password" > 
+                      <label for ="passwordrepeat">Repeat password</label>
+                      <input type="password" name="passwordrepeat" id="passwordrepeat" placeholder="Confirm Password" > 
 
-                    <input type="hidden" name="baseurl" id="baseurl" value="<%= baseurl %>">
-                    <input type="hidden" name="userid" id="userid" value="<%= userid %>">
-                    <button type="submit" lang="en">Save changes</button>
+                      <input type="hidden" name="baseurl" id="baseurl" value="<%= baseurl %>">
+                      <input type="hidden" name="userid" id="userid" value="<%= userid %>">
+                      <button type="submit" lang="en">Save changes</button>
+                    </div>
                 </form>
               </div>
             </div>
