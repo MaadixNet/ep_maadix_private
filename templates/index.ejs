@@ -22,15 +22,16 @@
   </head>
   <body>
   <header>
+    <div class="header-block header-block-buttons">
         <% if (authenticated) { %>
-                <div class="header-block header-block-buttons">
+              <div class="header-block header-block-nav first">
                   <a class="btn btn-sm header-btn" href="dashboard"><i class="demo-icon icon-home home-menu">&#xe81d;</i> My Groups</a> |
                         <% if (settings.public_pads) { %>
                           <a class="btn btn-sm header-btn" href="">Public Pad</a> |
                         <% } %>
                         <a class="btn btn-sm header-btn" href="help">Help</a>
                 </div>
-                <div class="header-block header-block-nav">
+                <div class="header-block header-block-nav second">
                   <ul id="profile">
                     <li>
                         <span class="name"><i class="demo-icon icon-user">&#xe800;</i>  <%= username %> <i class="demo-icon icon-down-dir-1">&#xe818;</i></span>
@@ -41,9 +42,10 @@
                     </li>
                   </ul>
                 </div>
-
         <% } else { %>
-                <div class="header-block header-block-nav">
+              <div class="header-block header-block-nav first">
+              </div>
+                <div class="header-block header-block-nav second">
                   <ul id="profile">
                     <li><span class="name"><a href="login"><i class="demo-icon icon-user">&#xe800;</i>  Login</a></span>
                     </li>
@@ -55,6 +57,7 @@
                 </div>
 
         <% } %>
+       </div>
 </header> 
       <article class="content items-list-page">
                 <% if (settings.public_pads ==1) { %>
