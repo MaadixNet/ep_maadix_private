@@ -24,18 +24,21 @@ var getBaseURL = function(slice,cb){
         var  loc = document.location, port = loc.port == "" ? (loc.protocol == "https:" ? 443
                         : 80)
                         : loc.port, url = loc.protocol + "//"
-                        + loc.hostname +":"+ loc.port, pathComponents = location.pathname
+                        + loc.hostname, pathComponents = location.pathname
                         .split('/'),
         // Strip admin/plugins
         baseURL = pathComponents.slice(0,
                         pathComponents.length - slice).join('/')
                         + '/';
-
+        console.log ("PORT " + port );
+        console.log("LOC PORT " + loc.port);
+        console.log("LOC Pirotocol " + loc.protocol);
+        if (loc.port) url = url + ":"+ loc.port;
         url = url + baseURL;
-//        console.log(">>>>>");
-        //console.log(url);
-//        console.log(baseURL);
-//        console.log("<<<<<<<<<");
+        console.log(">>>>>");
+        console.log(url);
+        console.log(baseURL);
+        console.log("<<<<<<<<<");
         cb(url);
 };
 
@@ -256,7 +259,7 @@ jQuery(document).ready(function(){
                         data.location = url;
                         data.padName = $("#createGroupPad").val();
                         data.groupId = $("#createPrivateGroupPad").data('groupid');
-//                      console.log(data);
+                      console.log(data);
                         post(data, url+'createPad' ,function(data){
                             if(!data.success){
                                   console.log(data.error);
@@ -345,12 +348,12 @@ jQuery(document).ready(function(){
     });
         $('#formEtherpadRegister').submit(function(e){
                 e.preventDefault();
-//              console.log('test');
                 var data = {};
                 var url;
                 var loc;
                 getBaseURL(1,function(baseurl){
                         data.location =  baseurl
+                        console.log("location data " + data.location );
                         data.userEmail = $("#email").val();
 //                      console.log(data);
                         post(data, baseurl+'register' ,function(data){

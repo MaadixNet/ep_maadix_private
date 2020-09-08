@@ -611,10 +611,12 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                       var nodemailer = require('nodemailer');
                                       //var transport = nodemailer.createTransport("sendmail");
                                       //transport.sendMail(message);
-				      let transporter = nodemailer.createTransport({
+				      let transporter = nodemailer.createTransport("sendmail",{
 					      sendmail: true,
                                               newline: 'unix',
-                                              path: '/usr/sbin/sendmail'
+                                              path: '/usr/sbin/sendmail',
+                                              debug: true, // show debug output
+                                              logger: true, // log information in console
                                       });
                                       transporter.sendMail(message
 					  , (err, info) => { 
@@ -729,7 +731,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 				      var nodemailer = require('nodemailer');
 				      //var transport = nodemailer.createTransport("sendmail");
 				      //transport.sendMail(message);
-				      let transporter = nodemailer.createTransport({
+				      let transporter = nodemailer.createTransport("sendmail",{
 					  sendmail: true,
 					  newline: 'unix',
 					  path: '/usr/sbin/sendmail'
@@ -1634,6 +1636,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             if (user[0] != null && user[0] != undefined && user.length > 0) {
                 inviteRegistered(user[0].email, currUserName, location, user[0].userID, groupID,UserRole, res);
             } else {
+                  console.log("Inviting unregistered user");
                     getPassword(function (consString) {
                         /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
                         
@@ -1644,14 +1647,16 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                         addUserQuery.on('result', function (newUser) {
                             connection.pause();
 //Maddish: crea el usuario pero se para. no envia mail y no añade usuario a grupo
-                            addUserToEtherpad(newUser.insertId, function () {
-                                    connection.resume();
+                           let mappedUser = addUserToEtherpad(newUser.insertId); 
+                              if (mappedUser)    {
+                              console.log("USER ADDEDDD   BEFORE  to user");
+                               connection.resume();
                                inviteUnregistered(groupID,UserRole, currUserName, location, userN,consString,newUser.insertId,function (error) {
+                                    console.log("AAAAAAFTER INVITE AND Sending email to user");
                                     log('error', error);
 
                                 });
-                            });
-                        });
+                            }                        });
                         addUserQuery.on('end', function () {
                         });
                       });
@@ -1671,36 +1676,37 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     var insertQuery = connection.query(sqlInsert, [userID, groupID,UserRole]);
                     insertQuery.on('error', mySqlErrorHandler);
                     insertQuery.on('result', function () {
-            var msg = eMailAuth.invitationmsg;
-            msg = msg.replace(/<groupname>/, group[0].name);
-            msg = msg.replace(/<fromuser>/, inviter);
-            msg = msg.replace(/<url>/, location);
+                    var msg = eMailAuth.invitationmsg;
+                    msg = msg.replace(/<groupname>/, group[0].name);
+                    msg = msg.replace(/<fromuser>/, inviter);
+                    msg = msg.replace(/<url>/, location);
 
-            var message = {
-                text: msg,
-                from: eMailAuth.invitationfrom,
-                to: email + " <" + email + ">",
-                subject: eMailAuth.invitationsubject
-            };
-            if (eMailAuth.smtp == "false") {
-		/*
-                var nodemailer = require('nodemailer');
-                var transport = nodemailer.createTransport("sendmail");
-                transport.sendMail(message);
-		*/
-		var nodemailer = require('nodemailer');
-		//var transport = nodemailer.createTransport("sendmail");
-		//transport.sendMail(message);
-		let transporter = nodemailer.createTransport({
-		    sendmail: true,
-		    newline: 'unix',
-		    path: '/usr/sbin/sendmail'
-		});
-		transporter.sendMail(message
-		, (err, info) => { 
-		console.log(err);
-		console.log(info);
-		});
+                    var message = {
+                      text: msg,
+                      from: eMailAuth.invitationfrom,
+                      to: email + " <" + email + ">",
+                      subject: eMailAuth.invitationsubject
+
+                  };
+                  if (eMailAuth.smtp == "false") {
+                    /*
+                    var nodemailer = require('nodemailer');
+                    var transport = nodemailer.createTransport("sendmail");
+                    transport.sendMail(message);
+                    */
+                    var nodemailer = require('nodemailer');
+                    //var transport = nodemailer.createTransport("sendmail");
+                    //transport.sendMail(message);
+                    let transporter = nodemailer.createTransport("sendmail",{
+                        sendmail: true,
+                        newline: 'unix',
+                        path: '/usr/sbin/sendmail'
+                    });
+                    transporter.sendMail(message
+                    , (err, info) => { 
+                    console.log(err);
+                    console.log(info);
+                    });
 
             }
             else {
@@ -1736,7 +1742,9 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 to: email + " <" + email + ">",
                 subject: eMailAuth.invitationsubject
             };
+            console.log("BEFOREEEEE Sending email to user");
             if (eMailAuth.smtp == "false") {
+                console.log("Sending email to user");
 		/*
                 var nodemailer = require('nodemailer');
                 var transport = nodemailer.createTransport("sendmail");
@@ -1745,10 +1753,13 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 		var nodemailer = require('nodemailer');
 		//var transport = nodemailer.createTransport("sendmail");
 		//transport.sendMail(message);
-		let transporter = nodemailer.createTransport({
+		let transporter = nodemailer.createTransport("sendmail",{
 		    sendmail: true,
 		    newline: 'unix',
-		    path: '/usr/sbin/sendmail'
+		    path: '/usr/sbin/sendmail',
+                    debug: true, // show debug output
+                    logger: true, // log information in console
+
 		});
 		transporter.sendMail(message
 		, (err, info) => { 
@@ -2353,43 +2364,41 @@ exports.socketio = function (hook_name, args, cb) {
 			  var addUserQuery = connection.query(addUserSql, [user.name,user.name, consString, salt]);
 			  addUserQuery.on('error', mySqlErrorHandler);
 			  addUserQuery.on('result', function (newUser) {
-			      connection.pause();
-			      addUserToEtherpad(newUser.insertId, function () {
-				  connection.resume();
-			  var msg = eMailAuth.invitationfromadminmsg;
-			  var urlTok= user.baseurl + 'confirm/' + consString;
-			  msg = msg.replace(/<url>/, urlTok);
-			  var message = {
-			      text: msg,
-			      from: eMailAuth.invitationfrom,
-			      to: email + " <" + user.name + ">",
-			      subject: eMailAuth.invitationsubject
-			  };
-			  if (eMailAuth.smtp == "false") {
-			      var nodemailer = require('nodemailer');
-			      //var transport = nodemailer.createTransport("sendmail");
-			      //transport.sendMail(message);
-			      let transporter = nodemailer.createTransport({
+                            connection.pause();
+                            let mappedUser = addUserToEtherpad(newUser.insertId);
+                            if (mappedUser) {
+                              connection.resume();
+                              var msg = eMailAuth.invitationfromadminmsg;
+                              var urlTok= user.baseurl + 'confirm/' + consString;
+                              msg = msg.replace(/<url>/, urlTok);
+                              var message = {
+                                text: msg,
+                                from: eMailAuth.invitationfrom,
+                                to: email + " <" + user.name + ">",
+                                subject: eMailAuth.invitationsubject
+                              };
+                              if (eMailAuth.smtp == "false") {
+                                var nodemailer = require('nodemailer');
+                                let transporter = nodemailer.createTransport("sendmail",{
 				  sendmail: true,
 				  newline: 'unix',
 				  path: '/usr/sbin/sendmail'
-			      });
-			      transporter.sendMail(message
-			      , (err, info) => {
-			      console.log(err);
-			      console.log(info);
-			      });
+                                });
+                                transporter.sendMail(message
+                                  , (err, info) => {
+                                  console.log(err);
+                                  console.log(info);
+                                  });
 
-			  }
-			  else {
-			      emailserver.send(message, function (err) {
-				  log('debub' , 'message sent');
-				  if (err) {
-				      log('error', err);
-				  }
-			      });
-			  }
-			      });
+                              } else {
+                                emailserver.send(message, function (err) {
+                                  log('debub' , 'message sent');
+                                  if (err) {
+                                    log('error', err);
+                                  }
+                                });
+                              }
+                            }
 			  });
 			  addUserQuery.on('end', function () {
 			      cb(true);
@@ -2460,7 +2469,7 @@ exports.socketio = function (hook_name, args, cb) {
 		      encryptPassword(pw, salt, function (encrypted) {
 			  if (eMailAuth.smtp == 'false') {
 		   //           transport.sendMail(message);
-			  let transporter = nodemailer.createTransport({
+			  let transporter = nodemailer.createTransport("sendmail",{
 				sendmail: true,
 				newline: 'unix',
 				path: '/usr/sbin/sendmail'
