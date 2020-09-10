@@ -30,38 +30,29 @@ var getBaseURL = function(slice,cb){
         baseURL = pathComponents.slice(0,
                         pathComponents.length - slice).join('/')
                         + '/';
-        console.log ("PORT " + port );
-        console.log("LOC PORT " + loc.port);
-        console.log("LOC Pirotocol " + loc.protocol);
         if (loc.port) url = url + ":"+ loc.port;
         url = url + baseURL;
+        /*
         console.log(">>>>>");
         console.log(url);
         console.log(baseURL);
         console.log("<<<<<<<<<");
+        */
         cb(url);
 };
 
 var first = true;
 
 function post(data,url , cb){
-        //console.log(data);
-        //console.log(url);
-        //console.log(cb);
         $.ajax({
                         type: 'POST',
                         data: JSON.stringify(data),
                         contentType: 'application/json',
                         url: url,
                         success: function(data) {
-//                              console.log('success'); 
                                 cb(data);
                         },
                         error: function (xhr, ajaxOptions, thrownError) {
-                                //console.log('no success');
-                                //console.log(xhr);
-                                //console.log(ajaxOptions);
-                                //console.log(thrownError);
                                 cb(null);
                         }
         });
@@ -174,8 +165,6 @@ jQuery(document).ready(function(){
                         data.fullname = $("#fullname").val();
                         data.passwordrepeat = $("#passwordrepeat").val();
                         data.location = url;
-                        console.log(data.location);
-                        console.log(document.location);
                         post(data, url+'/updateprofile' ,function(data){
                                         if(data.success){
                                                 window.location = document.location;
@@ -199,9 +188,6 @@ jQuery(document).ready(function(){
                                                      $("#inner").before('<div class="errorRight"><span class="arrowRight"></span><span lang="en">' + data.error +'</span></div>');
 
                                                 }
-
-
-//                                              console.log(data);
                                         }
                         });
         });
@@ -217,7 +203,6 @@ jQuery(document).ready(function(){
                         url = baseurl;
                         data.location = url;
                         data.groupName = $("#groupName").val();
-//                      console.log(url);
                         post(data, url+'createGroup' ,function(data){
                                 if(!data.success){
                                         if(data.error == "Group Name not defined"){
@@ -231,7 +216,6 @@ jQuery(document).ready(function(){
                                                         $("#createPrivateGroupForm .errorUp").delay(2000).fadeOut(1000);
                                         });
                                 }else{
-                                    //console.log(data);
                                     $("#groupName").val('');
                                     $("#wrapper").append('<div id="overlay"></div>');
                                     $("#wrapper").append('<div id="lightBox">'+
@@ -248,14 +232,12 @@ jQuery(document).ready(function(){
         //Function to add a private pad to a group, used in group.ejs
         $('#createPrivateGroupPad').click(function(e){
                 e.preventDefault();
-//              console.log('test');
                 var data = {};
                 var url;
                 var loc;
                 getBaseURL(2,function(baseurl){
                         loc = document.location;
                         url = baseurl;
-//                      console.log("heraöjdfö");
                         data.location = url;
                         data.padName = $("#createGroupPad").val();
                         data.groupId = $("#createPrivateGroupPad").data('groupid');
@@ -287,17 +269,12 @@ jQuery(document).ready(function(){
         //Function to go to pad iframe - Used in group.ejs
         $('.padClick').click(function(e){
                 e.preventDefault();
-//              console.log('here we are');
                 var groupId = $(this).data('groupid');
-//              console.log(groupId);
                 var padname = $(this).data('name');
-//              console.log(padname);
                 var data = {};
                 var url;
                 getBaseURL(2,function(baseurl){
-//                      console.log('adfklöajk');
                         url = baseurl;
-//                      console.log(url);
                         data.location = url;
                         data.groupId = groupId;
                         data.padname = padname;
@@ -315,7 +292,6 @@ jQuery(document).ready(function(){
     getBaseURL(1,function(baseurl){
       var padname = $('#openPadName').val();
       var url = $('#baseurl').val();
-  //              console.log('here');
       if(padname.length > 0) {
         window.location = baseurl + "pads/" + padname;
       } else {
@@ -353,11 +329,8 @@ jQuery(document).ready(function(){
                 var loc;
                 getBaseURL(1,function(baseurl){
                         data.location =  baseurl
-                        console.log("location data " + data.location );
                         data.userEmail = $("#email").val();
-//                      console.log(data);
                         post(data, baseurl+'register' ,function(data){
-                                console.log(data);
                                 if(data.error){
                                         console.log('Data error: ' + data.error);
                                             $(".errorUp").hide();
@@ -374,14 +347,12 @@ jQuery(document).ready(function(){
 
         $('#formEtherpadRcover').submit(function(e){
                 e.preventDefault();
-//              console.log('test');
                 var data = {}; 
                 var url;
                 var loc;
                 getBaseURL(1,function(baseurl){
                         data.location =  baseurl
                         data.userEmail = $("#email").val();
-//                      console.log(data);
                         post(data, baseurl+'recover' ,function(data){
                                 console.log(data);
                                 if(data.error){
@@ -408,8 +379,6 @@ jQuery(document).ready(function(){
                         data.passwordrepeat = $("#passwordrepeat").val();
                         data.tok = $("#tok").val();
                         data.location = url;
-                        console.log(data.location);
-                        console.log(document.location);
                         post(data, baseurl+'resetpsw' ,function(data){
                                         if(data.success){
                                                 window.location = url + "login?act=ok";
@@ -427,7 +396,6 @@ jQuery(document).ready(function(){
 
         $('#InviteUserForm').submit(function(e){
                 e.preventDefault();
-//              console.log('test');
                 var data = {};
                 var url;
                 var loc;
@@ -440,7 +408,6 @@ jQuery(document).ready(function(){
                         data.groupId = $("#InviteUserToGroupForm").data('groupid');
                         data.UserRole = $("#userRole").val();
                         data.UserRole =$('input[name=userRole]:radio:checked').val();
-//                      console.log(data);
                         post(data, url+'inviteUsers' ,function(data){
                                 if(!data.success){
                                         console.log(data.error);
@@ -451,7 +418,6 @@ jQuery(document).ready(function(){
                                                         $("#InviteUserForm .errorUp").delay(2000).fadeOut(1000);
                                         });
                                 }else{
-//                                    $("#groupName").val('');
                                     $("#wrapper").append('<div id="overlay"></div>');
                                     $("#wrapper").append('<div id="lightBox">'+
                                             '<div id="lightBoxMain" data-groupid= "'+ data.groupId+'" ><div class="headline"></div><div class="content"><h3 lang="en"class="center">Sending invitation</h3></div></div></div>');
@@ -502,9 +468,6 @@ jQuery(document).ready(function(){
                                                      $("#inner").before('<div class="errorRight"><span class="arrowRight"></span><span lang="en">' + data.error +'</span></div>');
 
                                                 }
-
-
-//                                              console.log(data);
                                         }
                         });
         });
@@ -521,7 +484,6 @@ jQuery(document).ready(function(){
           post(data, data.baseurl +'/updateUserRole' ,function(data){
              
                 if(data.success){
-                        //window.location =  loc;
                         $('span.updatestatus').addClass("success").html("Role changed").delay(2000).fadeOut(1000);
                 } else{
                   console.log(data.error);

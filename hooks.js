@@ -589,10 +589,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                         /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
                             addUserSql = "INSERT INTO User VALUES(null,?, ?,null, 0 ,null ,?, ?, 0)";
                             var addUserQuery = connection.query(addUserSql, [userEmail,userEmail, consString, salt]);
-                            console.log("USER ADDED TO DDBB");
                             addUserQuery.on('error', mySqlErrorHandler);
                             addUserQuery.on('result', function (newUser) {
-                                console.log("New user is " + newUser.insertId);
                                 connection.pause();
                                 //addUserToEtherpad(newUser.insertId, function (cb) {
                                 let mappedUser = addUserToEtherpad(newUser.insertId);
@@ -601,7 +599,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     connection.resume();
                                     var msg = eMailAuth.registrationtext;
                                     msg = msg.replace(/<url>/, fields.location + 'confirm/' +consString );
-                                    console.log("message is " + msg);
                                     var message = {
                                         text: msg,
                                         from: eMailAuth.invitationfrom,
@@ -624,7 +621,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 						console.log(err);
                                                 console.log(info);
                                       });
-                                      console.log("message sent????????????????");
                                     }  else {
 
                                       emailserver.send(message, function (err) {
@@ -1042,48 +1038,18 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     var deleteGroupPadsQuery = connection2.query(deleteGroupPadsSql, [fields.groupId]);
                                     deleteGroupPadsQuery.on('error', mySqlErrorHandler);
                                     deleteGroupPadsQuery.on('end', function () {
-					/*
-					asyncDeleteGroup(fields.groupId)
-					  .then(resp => {
-					    console.log(resp);
-					     let data = {};
-					      data.success = true;
-					      data.error = null;
-					      res.send(data);
-
-					})
-					.catch(err => {
-					    console.log(err);
-					});
-					*/
 					let deletegroup =asyncDeleteGroup(fields.groupId);
 					if (deletegroup) {
 					let data = {};
                                               data.success = true;
                                               data.error = null;
                                               res.send(data);
-					} else {
-                                          console.log("Error deleting Group");
-                                        }
+					} 
                                     });
                                 });
-					/*
-                                        getEtherpadGroupFromNormalGroup(fields.groupId, function (group) {
-                                        console.log("deletidng groupspspspspspsp " + group);
-                                        (async () => {
-
-                                        groupManager.deleteGroup(group);
-                                         var data = {};
-                                          data.success = true;
-                                          data.error = null;
-                                          res.send(data);
-                                      })();
-                                      });
-				     */
 				connection.resume();
                             });
                             deleteGroupQuery.on('end', function () {
-				console.log("DELETETION COMPLETEDDDDDDDDDDDDDDDDDD");
                             });
                         }
 
@@ -1144,10 +1110,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     }
                     var userInGroupSql = "SELECT * from UserGroup where UserGroup.userId = ? and UserGroup.groupID= ?";
                     getOneValueSql(userInGroupSql, [req.session.userId, fields.groupId], function (found) {
-                        console.log("FOUUUUUND");
                         if (found) {
                             getEtherpadGroupFromNormalGroup(fields.groupId, function (group) {
-                                console.log("GROIP SI : " + req.session.userId);
                                 //let etherpad_author =  addUserToEtherpad(req.session.userId);
                               (async () => {
                                   let etherpad_author = await addUserToEtherpad(req.session.userId);
@@ -1158,7 +1122,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                     //console.log("etherpad autoh is : " + etherpad_author.authorID);
                                   (async () => {
                                   let session = await sessionManager.createSession(group, etherpad_author.authorID, Date.now() + 7200000);
-                                        console.log ("sessio data " + session);
                                     //sessionManager.createSession(group, etherpad_author.authorID, Date.now() +
                                         var data = {};
                                         data.success = true;
@@ -1211,7 +1174,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                             settings: settings,
                                             padurl: req.session.baseurl + "/p/" + req.params.padID
                                         };
-                                        console.log ("render args " + render_args);
                                         res.send(eejs
                                             .require("ep_maadix/templates/pad.ejs",
                                                 render_args));
@@ -1639,7 +1601,6 @@ exports.expressCreateServer = function (hook_name, args, cb) {
             if (user[0] != null && user[0] != undefined && user.length > 0) {
                 inviteRegistered(user[0].email, currUserName, location, user[0].userID, groupID,UserRole, res);
             } else {
-                  console.log("Inviting unregistered user");
                     getPassword(function (consString) {
                         /* Fields in User table are:userID, name, email, password, confirmed, FullName, confirmationString, salt, active*/
                         
@@ -1652,10 +1613,8 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 //Maddish: crea el usuario pero se para. no envia mail y no añade usuario a grupo
                            let mappedUser = addUserToEtherpad(newUser.insertId); 
                               if (mappedUser)    {
-                              console.log("USER ADDEDDD   BEFORE  to user");
                                connection.resume();
                                inviteUnregistered(groupID,UserRole, currUserName, location, userN,consString,newUser.insertId,function (error) {
-                                    console.log("AAAAAAFTER INVITE AND Sending email to user");
                                     log('error', error);
 
                                 });
@@ -1745,14 +1704,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 to: email + " <" + email + ">",
                 subject: eMailAuth.invitationsubject
             };
-            console.log("BEFOREEEEE Sending email to user");
             if (eMailAuth.smtp == "false") {
-                console.log("Sending email to user");
-		/*
-                var nodemailer = require('nodemailer');
-                var transport = nodemailer.createTransport("sendmail");
-                transport.sendMail(message);
-		*/
 		var nodemailer = require('nodemailer');
 		//var transport = nodemailer.createTransport("sendmail");
 		//transport.sendMail(message);
@@ -2274,7 +2226,6 @@ exports.socketio = function (hook_name, args, cb) {
                     let groupmapper = group.insertId.toString();
                     let grupcreated = groupManager.createGroupIfNotExistsFor(groupmapper);
                     if (grupcreated) {
-                      console.log("NEW GROUP CREATEEEEEEEEEEEEEEEEEEEEEEEED");
 		      cb(grupcreated);
 		      connection.resume();
 		    }
