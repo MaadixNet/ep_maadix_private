@@ -17,7 +17,8 @@ var eejs = require('ep_etherpad-lite/node/eejs');
 var padManager = require('ep_etherpad-lite/node/db/PadManager');
 var db = require('ep_etherpad-lite/node/db/DB').db;
 var ERR = require("ep_etherpad-lite/node_modules/async-stacktrace");
-var groupManager = require('ep_etherpad-lite/node/db/GroupManager');
+//var groupManager = require('ep_etherpad-lite/node/db/GroupManager');
+var groupManager = require(__dirname + '/GroupManager');
 var api = require('ep_etherpad-lite/node/db/API');
 var Changeset = require('ep_etherpad-lite/static/js/Changeset');
 var mysql = require('mysql');
@@ -1061,7 +1062,9 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                               data.success = true;
                                               data.error = null;
                                               res.send(data);
-					}
+					} else {
+                                          console.log("Error deleting Group");
+                                        }
                                     });
                                 });
 					/*
