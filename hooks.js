@@ -2433,7 +2433,7 @@ exports.socketio = function (hook_name, args, cb) {
       });
 
       socket.on("activate-user", function (user, cb) {
-	  var sqlUpdate = "UPDATE User SET User.active = 1 where User.userID = ?";
+	  var sqlUpdate = "UPDATE User SET User.active = 1, confirmed=1 where User.userID = ?";
 	  var updateQuery = connection.query(sqlUpdate, [user.id]);
 
 	  updateQuery.on('error', function(err) {
