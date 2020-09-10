@@ -15,6 +15,13 @@ Demo
 
 https://demo.maadix.net/etherpad/
 
+Compatibility
+-------------
+
+This version requires Etherpad v1.8.4
+Tested on Node 10.22.0
+
+
 Installation
 ------------
 
