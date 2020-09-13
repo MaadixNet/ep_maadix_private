@@ -12,7 +12,7 @@
     "emailjs": "1.0.12",
     "formidable": "1.2.2",
     "mysql": "2.18.1",
-    "nodemailer": "0.5.15"
+    "nodemailer": "6.4.11"
   },
   "description": "With the maadix plugin it's possible to create private pads in groups and invite users. It's a User-Management System. It allows User to register (otional), authenticate, to create groups and to create pads in groups.",
   "devDependencies": {},
