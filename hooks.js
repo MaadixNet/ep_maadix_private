@@ -609,7 +609,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                                       var nodemailer = require('nodemailer');
                                       //var transport = nodemailer.createTransport("sendmail");
                                       //transport.sendMail(message);
-				      let transporter = nodemailer.createTransport("sendmail",{
+				      let transporter = nodemailer.createTransport({
 					      sendmail: true,
                                               newline: 'unix',
                                               path: '/usr/sbin/sendmail',
@@ -728,7 +728,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 				      var nodemailer = require('nodemailer');
 				      //var transport = nodemailer.createTransport("sendmail");
 				      //transport.sendMail(message);
-				      let transporter = nodemailer.createTransport("sendmail",{
+				      let transporter = nodemailer.createTransport({
 					  sendmail: true,
 					  newline: 'unix',
 					  path: '/usr/sbin/sendmail'
@@ -1659,7 +1659,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                     var nodemailer = require('nodemailer');
                     //var transport = nodemailer.createTransport("sendmail");
                     //transport.sendMail(message);
-                    let transporter = nodemailer.createTransport("sendmail",{
+                    let transporter = nodemailer.createTransport({
                         sendmail: true,
                         newline: 'unix',
                         path: '/usr/sbin/sendmail'
@@ -1708,7 +1708,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 		var nodemailer = require('nodemailer');
 		//var transport = nodemailer.createTransport("sendmail");
 		//transport.sendMail(message);
-		let transporter = nodemailer.createTransport("sendmail",{
+		let transporter = nodemailer.createTransport({
 		    sendmail: true,
 		    newline: 'unix',
 		    path: '/usr/sbin/sendmail',
@@ -2333,7 +2333,7 @@ exports.socketio = function (hook_name, args, cb) {
                               };
                               if (eMailAuth.smtp == "false") {
                                 var nodemailer = require('nodemailer');
-                                let transporter = nodemailer.createTransport("sendmail",{
+                                let transporter = nodemailer.createTransport({
 				  sendmail: true,
 				  newline: 'unix',
 				  path: '/usr/sbin/sendmail'
@@ -2423,7 +2423,7 @@ exports.socketio = function (hook_name, args, cb) {
 		      encryptPassword(pw, salt, function (encrypted) {
 			  if (eMailAuth.smtp == 'false') {
 		   //           transport.sendMail(message);
-			  let transporter = nodemailer.createTransport("sendmail",{
+			  let transporter = nodemailer.createTransport({
 				sendmail: true,
 				newline: 'unix',
 				path: '/usr/sbin/sendmail'
