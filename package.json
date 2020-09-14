@@ -8,6 +8,7 @@
     "url": "https://github.com/MaadixNet/ep_maadix/issues"
   },
   "dependencies": {
+    "crypto": "0.0.3",
     "emailjs": "3.3.0",
     "formidable": "1.2.2",
     "mysql": "2.18.1",
