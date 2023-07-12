@@ -16,8 +16,6 @@ var path = require('path');
 var eejs = require('ep_etherpad-lite/node/eejs');
 var padManager = require('ep_etherpad-lite/node/db/PadManager');
 var db = require('ep_etherpad-lite/node/db/DB').db;
-var ERR = require("ep_etherpad-lite/node_modules/async-stacktrace");
-//var groupManager = require('ep_etherpad-lite/node/db/GroupManager');
 var groupManager = require(__dirname + '/GroupManager');
 var api = require('ep_etherpad-lite/node/db/API');
 var Changeset = require('ep_etherpad-lite/static/js/Changeset');
@@ -333,12 +331,17 @@ function addUserToEtherpad(userName) {
 function mapAuthorWithDBKey(mapperkey, mapper, callback) {
     //try to map to an author
     db.get(mapperkey + ":" + mapper, function (err, author) {
-        if (ERR(err, callback)) return;
-
+        if(err) {
+              callback(err);
+              return;
+        }
         //there is no author with this mapper, so create one
         if (author == null) {
             authorManager.createAuthor(null, function (err, author) {
-                if (ERR(err, callback)) return;
+                if(err) {
+                    callback(err);
+                    return;
+                }
 
                 //create the token2author relation
                 db.set(mapperkey + ":" + mapper, author.authorID);
