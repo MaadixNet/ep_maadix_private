@@ -1,21 +1,14 @@
 {
-  "author": {
-    "name": "MaadiX",
-    "email": "contact@maadix.net",
-    "url": "https://maadix.net"
-  },
+  "author": "MaadiX <contact@maadix.net> (https://maadix.net)",
   "bugs": {
     "url": "https://github.com/MaadixNet/ep_maadix/issues"
   },
   "dependencies": {
-    "crypto": "0.0.3",
-    "emailjs": "3.3.0",
-    "formidable": "1.2.2",
-    "mysql": "2.18.1",
-    "nodemailer": "6.4.11"
+    "formidable": "3.5.0",
+    "mysql2": "3.5.1",
+    "nodemailer": "6.9.3"
   },
   "description": "With the maadix plugin it's possible to create private pads in groups and invite users. It's a User-Management System. It allows User to register (otional), authenticate, to create groups and to create pads in groups.",
-  "devDependencies": {},
   "homepage": "https://github.com/MaadixNet/ep_maadix#readme",
   "keywords": [
     "etherpad-lite",
@@ -29,9 +22,6 @@
   "license": "Apache-2.0",
   "main": "hooks.js",
   "name": "ep_maadix",
-  "optionalDependencies": {},
-  "readme": "This is a user-management system for etherpad-lite\n\nINSTALL\n=======\n\n1) npm install ep_maadix\n2) You can visit http://youretherpad/admin/plugins. Search for maadix - click on install and the plugin works.\n(see also https://github.com/Pita/etherpad-lite/wiki/Creating-a-plugin   [Step 5 Install plugin])\n\n\n",
-  "readmeFilename": "README.txt",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MaadixNet/ep_maadix.git"
@@ -39,5 +29,5 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "1.0.1"
+  "version": "2.0.0"
 }

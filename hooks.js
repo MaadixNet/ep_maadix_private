@@ -20,7 +20,6 @@ var groupManager = require(__dirname + '/GroupManager');
 var api = require('ep_etherpad-lite/node/db/API');
 var Changeset = require('ep_etherpad-lite/static/js/Changeset');
 var mysql = require('mysql');
-var email = require('emailjs');
 var settings = require('ep_etherpad-lite/node/utils/Settings');
 var customError = require("ep_etherpad-lite/node/utils/customError");
 var authorManager = require('ep_etherpad-lite/node/db/AuthorManager');
@@ -73,7 +72,6 @@ encryptPassword = function (password, salt, cb) {
     var encrypted = crypto.createHmac('sha256', salt).update(password).digest('hex');
     cb(encrypted);
 };
-
 userRole = function (numrole,cb) {
   var textrole = '';
   switch (numrole) {
@@ -399,16 +397,13 @@ var userAuthentication = function (username, password, cb) {
     queryUser.on('error', mySqlErrorHandler);
     queryUser.on('result', function (foundUser) {
         userFound = true;
-        encryptPassword(password, foundUser.salt, function (encrypted) {
+        confirmed= foundUser.confirmed;
+        active = foundUser.active;
+        encryptPassword(password.toString(), foundUser.salt, function (encrypted) {
             if (foundUser.password == encrypted && foundUser.confirmed && foundUser.active) {
                 sent = true;
                 cb(true, foundUser, null, confirmed);
-            } else if (!foundUser.active) {
-                active = false;
-            }
-            else {
-                confirmed = foundUser.confirmed;
-            }
+            } 
         });
     });
     queryUser.on('end', function () {
@@ -417,15 +412,6 @@ var userAuthentication = function (username, password, cb) {
         }
     });
 };
-/*
-var emailserver = email.server.connect({
-    user: eMailAuth.user,
-    password: eMailAuth.password,
-    host: eMailAuth.host,
-    port: eMailAuth.port,
-    ssl: eMailAuth.ssl
-});
-*/
 function sendError(error, res) {
     var data = {};
     data.success = false;
@@ -448,31 +434,31 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         var render_args = {
             errors: []
         };
-        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin.ejs", render_args));
+        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin.html", render_args));
     });
     args.app.get('/admin/userpadadmin/groups', function (req, res) {
         var render_args = {
             errors: []
         };
-        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_groups.ejs", render_args));
+        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_groups.html", render_args));
     });
     args.app.get('/admin/userpadadmin/groups/group', function (req, res) {
         var render_args = {
             errors: []
         };
-        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_group.ejs", render_args));
+        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_group.html", render_args));
     });
     args.app.get('/admin/userpadadmin/users', function (req, res) {
         var render_args = {
             errors: []
         };
-        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_users.ejs", render_args));
+        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_users.html", render_args));
     });
     args.app.get('/admin/userpadadmin/users/user', function (req, res) {
         var render_args = {
             errors: []
         };
-        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_user.ejs", render_args));
+        res.send(eejs.require("ep_maadix/templates/admin/user_pad_admin_user.html", render_args));
     });
 
     args.app.get('/logout', function (req, res) {
@@ -518,6 +504,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
                 res.send(eejs.require("ep_maadix/templates/login.ejs", render_args));
                 return false;
             }
+            console.log("Field pass" + typeof(fields.password));
             var url = fields.baseurl;
             var retVal = userAuthentication(fields.email, fields.password, function (success, user, userFound, confirmed, active) {
                 if (success) {
@@ -2331,7 +2318,7 @@ exports.socketio = function (hook_name, args, cb) {
                               var message = {
                                 text: msg,
                                 from: eMailAuth.invitationfrom,
-                                to: email + " <" + user.name + ">",
+                                to: user.name + " <" + user.name + ">",
                                 subject: eMailAuth.invitationsubject
                               };
                               if (eMailAuth.smtp == "false") {

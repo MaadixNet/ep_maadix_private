@@ -9,9 +9,6 @@
         "eejsBlock_indexWrapper" : "ep_maadix/hooks",
         "socketio"		: "ep_maadix/hooks",
         "eejsBlock_styles" : "ep_maadix/hooks"
-      },
-      "client_hooks": {
-        "documentReady" : "ep_maadix/static/js/admin/user_pad_admin"
       }
     }
   ]
