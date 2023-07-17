@@ -18,9 +18,8 @@ https://demo.maadix.net/etherpad/
 Compatibility
 -------------
 
-This version requires Etherpad v1.8.4
-Tested on Node 10.22.0
-
+Latest version requires Etherpad >=v1.9.1
+Tested up to Node 18.16.1
 
 Installation
 ------------
@@ -39,14 +38,6 @@ Then use the provided [SQL script](/sql_listing.sql) to create the schema:
 
     mysql -u USER -p < sql_listing.sql
 
-This pluging has been developed for an Etherpad installation with reverse proxy under a subpath (e.g. mydomain.com/etherpad/ )
-For now you still need  to add the following line in your Vhost config, in order to redirect properly non-logged in users  
-
-    RedirectMatch Permanent ^/login$ /etherpad/login  
-
-where /etherpad/ is the name of your subpath.  
-
-It should also work for an installation without Reverse Proxy, but it has not been tested.
 
 Usage
 -----------
